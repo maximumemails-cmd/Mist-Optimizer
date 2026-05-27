@@ -1,0 +1,108 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="using:PCOptimizer.Models"
+             xmlns:vm="using:PCOptimizer.ViewModels"
+             x:Class="PCOptimizer.Views.RamCleanerPanelView"
+             x:DataType="vm:RamCleanerPanelViewModel">
+    <Border Classes="card"
+            Background="{DynamicResource AppCardBrush}"
+            BorderBrush="{DynamicResource AppBorderBrush}"
+            BorderThickness="1"
+            CornerRadius="20"
+            Padding="16"
+            BoxShadow="0 16 42 #30000000">
+        <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="12" MinHeight="0">
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                <StackPanel Spacing="4">
+                    <TextBlock Text="RAM Cleaner / Game Focus"
+                               Foreground="{DynamicResource AppTextBrush}"
+                               FontSize="20"
+                               FontWeight="SemiBold"
+                               TextWrapping="Wrap" />
+                    <TextBlock Text="Windows manages RAM automatically; this safely previews focus actions and measures real changes."
+                               Foreground="{DynamicResource AppMutedTextBrush}"
+                               FontSize="12"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Button Content="Refresh" Command="{Binding RefreshStatsCommand}" />
+                    <Button Content="Scan Processes" Command="{Binding ScanCommand}" />
+                    <Button Content="Clean RAM"
+                            Command="{Binding CleanCommand}"
+                            Background="{DynamicResource AppAccentBrush}"
+                            Foreground="White"
+                            FontWeight="SemiBold" />
+                </StackPanel>
+            </Grid>
+
+            <Grid Grid.Row="1" ColumnDefinitions="1.2*,*,*,*,*" ColumnSpacing="10">
+                <Border Background="{DynamicResource AppPanelBrush}"
+                        BorderBrush="{DynamicResource AppBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="14"
+                        Padding="12">
+                    <StackPanel Spacing="7">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="RAM usage" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" />
+                            <TextBlock Grid.Column="1" Text="{Binding MemoryStats.UsagePercentDisplay}" Foreground="{DynamicResource AppAccentBrush}" FontSize="18" FontWeight="SemiBold" />
+                        </Grid>
+                        <Border Height="10" CornerRadius="5" Background="{DynamicResource AppPanelAltBrush}">
+                            <Border Width="{Binding RamUsageMeterWidth}"
+                                    Height="10"
+                                    CornerRadius="5"
+                                    Background="{DynamicResource AppAccentBrush}"
+                                    HorizontalAlignment="Left">
+                                <Border.Transitions>
+                                    <Transitions>
+                                        <DoubleTransition Property="Width" Duration="0:0:0.35" />
+                                    </Transitions>
+                                </Border.Transitions>
+                            </Border>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="1" Background="{DynamicResource AppPanelBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1" CornerRadius="14" Padding="12">
+                    <StackPanel>
+                        <TextBlock Text="Total RAM" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" />
+                        <TextBlock Text="{Binding MemoryStats.TotalDisplay}" Foreground="{DynamicResource AppTextBrush}" FontSize="15" FontWeight="SemiBold" />
+                    </StackPanel>
+                </Border>
+                <Border Grid.Column="2" Background="{DynamicResource AppPanelBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1" CornerRadius="14" Padding="12">
+                    <StackPanel>
+                        <TextBlock Text="Used" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" />
+                        <TextBlock Text="{Binding MemoryStats.UsedDisplay}" Foreground="{DynamicResource AppTextBrush}" FontSize="15" FontWeight="SemiBold" />
+                    </StackPanel>
+                </Border>
+                <Border Grid.Column="3" Background="{DynamicResource AppPanelBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1" CornerRadius="14" Padding="12">
+                    <StackPanel>
+                        <TextBlock Text="Available" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" />
+                        <TextBlock Text="{Binding MemoryStats.AvailableDisplay}" Foreground="{DynamicResource AppTextBrush}" FontSize="15" FontWeight="SemiBold" />
+                    </StackPanel>
+                </Border>
+                <Border Grid.Column="4" Background="{DynamicResource AppPanelBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1" CornerRadius="14" Padding="12">
+                    <StackPanel>
+                        <TextBlock Text="Cleaned" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" />
+                        <TextBlock Text="{Binding RamCleanedDisplay}" Foreground="{DynamicResource AppSuccessBrush}" FontSize="15" FontWeight="SemiBold" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                <StackPanel Spacing="4">
+                    <TextBlock Text="{Binding ProcessCount}" Foreground="{DynamicResource AppTextBrush}" FontSize="12" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding CleanResultMessage}" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" TextWrapping="Wrap" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <CheckBox Content="Allow manual closing"
+                              IsChecked="{Binding AllowClosingSelectedNonCriticalApps}"
+                              FontSize="12" />
+                    <CheckBox Content="Focus suggestions"
+                              IsChecked="{Binding FocusModeEnabled}"
+                              FontSize="12" />
+                    <Button Content="Preview" Command="{Binding PreviewCommand}" />
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

@@ -1,0 +1,42 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:PCOptimizer.ViewModels"
+             x:Class="PCOptimizer.Controls.ThemeToggleControl"
+             x:DataType="vm:ThemeToggleViewModel">
+    <Button Command="{Binding ToggleCommand}"
+            Background="Transparent"
+            BorderBrush="Transparent"
+            Padding="0"
+            HorizontalAlignment="Left">
+        <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+            <Border Width="78"
+                    Height="38"
+                    CornerRadius="19"
+                    Background="{DynamicResource AppPanelAltBrush}"
+                    BorderBrush="{DynamicResource AppBorderBrush}"
+                    BorderThickness="1"
+                    Padding="4"
+                    BoxShadow="0 8 22 #33000000">
+                <Grid>
+                    <TextBlock Text="☀" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="8,0,0,1" Foreground="{DynamicResource AppAccentAltBrush}" FontSize="14" />
+                    <TextBlock Text="☾" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,9,1" Foreground="{DynamicResource AppAccentBrush}" FontSize="14" />
+                    <Border x:Name="Thumb"
+                            Width="30"
+                            Height="30"
+                            CornerRadius="15"
+                            Background="{DynamicResource AppTextBrush}"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center">
+                        <Border.RenderTransform>
+                            <TranslateTransform />
+                        </Border.RenderTransform>
+                    </Border>
+                </Grid>
+            </Border>
+            <TextBlock Text="{Binding LabelText}"
+                       VerticalAlignment="Center"
+                       Foreground="{DynamicResource AppMutedTextBrush}"
+                       FontSize="13" />
+        </StackPanel>
+    </Button>
+</UserControl>

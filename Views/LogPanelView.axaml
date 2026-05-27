@@ -1,0 +1,38 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="using:PCOptimizer.Models"
+             xmlns:vm="using:PCOptimizer.ViewModels"
+             x:Class="PCOptimizer.Views.LogPanelView"
+             x:DataType="vm:LogPanelViewModel">
+    <Border Classes="card"
+            Background="{DynamicResource AppPanelBrush}"
+            BorderBrush="{DynamicResource AppBorderBrush}"
+            BorderThickness="1,1,0,0"
+            CornerRadius="18,18,0,0"
+            Padding="16">
+        <Grid RowDefinitions="Auto,*">
+            <Grid ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,0,0,10">
+                <TextBlock Text="Persistent Log" Foreground="{DynamicResource AppTextBrush}" FontSize="16" FontWeight="SemiBold" />
+                <Button Grid.Column="1" Content="Clear logs" Command="{Binding ClearCommand}" Margin="8,0,0,0" />
+                <Button Grid.Column="2" Content="Copy logs" Command="{Binding CopyCommand}" Margin="8,0,0,0" />
+                <Button Grid.Column="3" Content="Save logs" Command="{Binding SaveCommand}" Margin="8,0,0,0" />
+            </Grid>
+            <Border Grid.Row="1" Background="{DynamicResource AppBackgroundBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="10">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Logs}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="models:LogEntry">
+                                <TextBlock Text="{Binding DisplayText}"
+                                           Foreground="{DynamicResource AppTextBrush}"
+                                           FontFamily="Consolas, Menlo, monospace"
+                                           FontSize="12"
+                                           Margin="0,0,0,4"
+                                           TextWrapping="Wrap" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

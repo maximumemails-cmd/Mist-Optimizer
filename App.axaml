@@ -1,0 +1,66 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="PCOptimizer.App"
+             RequestedThemeVariant="Dark">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://PCOptimizer/Themes/ThemeResources.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme />
+        <Style Selector="Button">
+            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.22" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.22" />
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.16" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button:pointerover">
+            <Setter Property="Opacity" Value="0.92" />
+        </Style>
+        <Style Selector="CheckBox">
+            <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}" />
+        </Style>
+        <Style Selector="ProgressBar">
+            <Setter Property="Height" Value="8" />
+            <Setter Property="Foreground" Value="{DynamicResource AppAccentBrush}" />
+            <Setter Property="Background" Value="{DynamicResource AppPanelAltBrush}" />
+        </Style>
+        <Style Selector="ScrollBar:vertical">
+            <Setter Property="Width" Value="8" />
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="ScrollBar:horizontal">
+            <Setter Property="Height" Value="8" />
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="ScrollBar /template/ Thumb">
+            <Setter Property="Background" Value="{DynamicResource AppAccentBrush}" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Opacity" Value="0.72" />
+        </Style>
+        <Style Selector="ScrollBar /template/ Thumb:pointerover">
+            <Setter Property="Opacity" Value="0.95" />
+        </Style>
+        <Style Selector="Border.card">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.32" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.32" />
+                    <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.22" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.card:pointerover">
+            <Setter Property="BoxShadow" Value="0 20 55 #44000000" />
+        </Style>
+    </Application.Styles>
+</Application>

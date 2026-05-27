@@ -1,0 +1,123 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="using:PCOptimizer.Controls"
+        xmlns:views="using:PCOptimizer.Views"
+        xmlns:vm="using:PCOptimizer.ViewModels"
+        x:Class="PCOptimizer.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="PC Optimizer"
+        Width="1440"
+        Height="920"
+        MinWidth="980"
+        MinHeight="700"
+        Background="{DynamicResource AppBackgroundBrush}">
+    <Grid>
+        <Border Background="{DynamicResource AppShellBrush}">
+            <Border.Transitions>
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.38" />
+                </Transitions>
+            </Border.Transitions>
+            <Grid RowDefinitions="Auto,Auto,*,170" Margin="24,20,24,0">
+                <controls:StarFieldControl IsVisible="{Binding ThemeToggle.IsDarkTheme}"
+                                           IsPaused="{Binding AreAnimationsPaused}"
+                                           Grid.RowSpan="4" />
+
+                <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,14">
+                    <controls:ThemeToggleControl DataContext="{Binding ThemeToggle}" />
+                    <StackPanel Grid.Column="1" Spacing="4" HorizontalAlignment="Center">
+                        <TextBlock Text="PC Optimizer" Foreground="{DynamicResource AppTextBrush}" FontSize="34" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                        <TextBlock Text="Safe optimisation engine, restart-aware workflows, RAM preview, and persistent logs." Foreground="{DynamicResource AppMutedTextBrush}" FontSize="14" HorizontalAlignment="Center" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                        <CheckBox Content="Advanced tweaks"
+                                  IsChecked="{Binding ShowAdvancedTweaks}"
+                                  VerticalAlignment="Center" />
+                        <StackPanel Width="190" Spacing="5">
+                            <TextBlock Text="Global progress" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" />
+                            <ProgressBar Minimum="0" Maximum="1" Value="{Binding GlobalProgress}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+
+                <Border Grid.Row="1"
+                        Classes="card"
+                        Background="{DynamicResource AppCardBrush}"
+                        BorderBrush="{DynamicResource AppBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="18"
+                        Padding="14"
+                        Margin="0,0,0,14"
+                        BoxShadow="0 12 35 #26000000">
+                    <Grid ColumnDefinitions="Auto,*,*,*,*,Auto" ColumnSpacing="14">
+                        <StackPanel Spacing="3" VerticalAlignment="Center" Margin="0,0,8,0">
+                            <TextBlock Text="Hardware summary" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" />
+                            <TextBlock Text="Live system info" Foreground="{DynamicResource AppTextBrush}" FontSize="13" FontWeight="SemiBold" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="3">
+                            <TextBlock Text="GPU" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" />
+                            <TextBlock Text="{Binding HardwareSummary.Gpu}" Foreground="{DynamicResource AppTextBrush}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Spacing="3">
+                            <TextBlock Text="CPU" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" />
+                            <TextBlock Text="{Binding HardwareSummary.Cpu}" Foreground="{DynamicResource AppTextBrush}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding HardwareSummary.CpuUsage}" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="3" Spacing="3">
+                            <TextBlock Text="RAM" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" />
+                            <TextBlock Text="{Binding HardwareSummary.Ram}" Foreground="{DynamicResource AppTextBrush}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="4" Spacing="3">
+                            <TextBlock Text="Storage" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" />
+                            <TextBlock Text="{Binding HardwareSummary.Storage}" Foreground="{DynamicResource AppTextBrush}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="5" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding HardwareSummary.Processes}" Foreground="{DynamicResource AppTextBrush}" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <Button Content="Refresh" Command="{Binding RefreshHardwareCommand}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <views:DashboardView Grid.Row="2" DataContext="{Binding Dashboard}" />
+                <views:LogPanelView Grid.Row="3" DataContext="{Binding LogPanel}" Margin="-24,14,-24,0" />
+            </Grid>
+        </Border>
+
+        <Border IsVisible="{Binding IsRestartPromptOpen}"
+                Background="#99000000"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch">
+            <Border Width="460"
+                    Padding="24"
+                    CornerRadius="22"
+                    Background="{DynamicResource AppPanelBrush}"
+                    BorderBrush="{DynamicResource AppBorderBrush}"
+                    BorderThickness="1"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 24 70 #66000000">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="Restart Required" Foreground="{DynamicResource AppTextBrush}" FontSize="24" FontWeight="SemiBold" />
+                    <TextBlock Text="Some optimisations require a restart to finish applying." Foreground="{DynamicResource AppMutedTextBrush}" TextWrapping="Wrap" />
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                        <Button Content="Restart Later" Command="{Binding RestartLaterCommand}" />
+                        <Button Grid.Column="1"
+                                Content="Restart Now"
+                                Command="{Binding RestartNowCommand}"
+                                Background="{DynamicResource AppAccentBrush}"
+                                Foreground="White" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <TextBlock Text="Contributers: Stockcatt + Codex + DewierStepSister"
+                   HorizontalAlignment="Right"
+                   VerticalAlignment="Bottom"
+                   Margin="0,0,14,8"
+                   Foreground="{DynamicResource AppMutedTextBrush}"
+                   FontSize="11"
+                   Opacity="0.78"
+                   IsHitTestVisible="False" />
+    </Grid>
+</Window>
