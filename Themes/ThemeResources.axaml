@@ -1,63 +1,39 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <ResourceDictionary.ThemeDictionaries>
-        <ResourceDictionary x:Key="Dark">
-            <Color x:Key="AppTextColor">#F6F8FF</Color>
-            <Color x:Key="AppMutedTextColor">#AEB9CC</Color>
-            <Color x:Key="AppBackgroundColor">#07111F</Color>
-            <Color x:Key="AppPanelColor">#111A2A</Color>
-            <Color x:Key="AppPanelAltColor">#17233A</Color>
-            <Color x:Key="AppBorderColor">#2D3B5D</Color>
-            <Color x:Key="AppAccentColor">#7C9CFF</Color>
-            <Color x:Key="AppAccentAltColor">#B47CFF</Color>
-            <Color x:Key="AppSuccessColor">#55D58B</Color>
-            <SolidColorBrush x:Key="AppTextBrush" Color="{DynamicResource AppTextColor}" />
-            <SolidColorBrush x:Key="AppMutedTextBrush" Color="{DynamicResource AppMutedTextColor}" />
-            <SolidColorBrush x:Key="AppBackgroundBrush" Color="{DynamicResource AppBackgroundColor}" />
-            <SolidColorBrush x:Key="AppPanelBrush" Color="{DynamicResource AppPanelColor}" />
-            <SolidColorBrush x:Key="AppPanelAltBrush" Color="{DynamicResource AppPanelAltColor}" />
-            <SolidColorBrush x:Key="AppBorderBrush" Color="{DynamicResource AppBorderColor}" />
-            <SolidColorBrush x:Key="AppAccentBrush" Color="{DynamicResource AppAccentColor}" />
-            <SolidColorBrush x:Key="AppAccentAltBrush" Color="{DynamicResource AppAccentAltColor}" />
-            <SolidColorBrush x:Key="AppSuccessBrush" Color="{DynamicResource AppSuccessColor}" />
-            <LinearGradientBrush x:Key="AppShellBrush" StartPoint="0%,0%" EndPoint="100%,100%">
-                <GradientStop Color="#07111F" Offset="0" />
-                <GradientStop Color="#101B3D" Offset="0.55" />
-                <GradientStop Color="#211644" Offset="1" />
-            </LinearGradientBrush>
-            <LinearGradientBrush x:Key="AppCardBrush" StartPoint="0%,0%" EndPoint="100%,100%">
-                <GradientStop Color="#17233A" Offset="0" />
-                <GradientStop Color="#101827" Offset="1" />
-            </LinearGradientBrush>
-        </ResourceDictionary>
-        <ResourceDictionary x:Key="Light">
-            <Color x:Key="AppTextColor">#172033</Color>
-            <Color x:Key="AppMutedTextColor">#5E6A7D</Color>
-            <Color x:Key="AppBackgroundColor">#E9F6FF</Color>
-            <Color x:Key="AppPanelColor">#F2FAFF</Color>
-            <Color x:Key="AppPanelAltColor">#DDF0FF</Color>
-            <Color x:Key="AppBorderColor">#BFD9EF</Color>
-            <Color x:Key="AppAccentColor">#2878D8</Color>
-            <Color x:Key="AppAccentAltColor">#E7B83F</Color>
-            <Color x:Key="AppSuccessColor">#1E9F61</Color>
-            <SolidColorBrush x:Key="AppTextBrush" Color="{DynamicResource AppTextColor}" />
-            <SolidColorBrush x:Key="AppMutedTextBrush" Color="{DynamicResource AppMutedTextColor}" />
-            <SolidColorBrush x:Key="AppBackgroundBrush" Color="{DynamicResource AppBackgroundColor}" />
-            <SolidColorBrush x:Key="AppPanelBrush" Color="{DynamicResource AppPanelColor}" />
-            <SolidColorBrush x:Key="AppPanelAltBrush" Color="{DynamicResource AppPanelAltColor}" />
-            <SolidColorBrush x:Key="AppBorderBrush" Color="{DynamicResource AppBorderColor}" />
-            <SolidColorBrush x:Key="AppAccentBrush" Color="{DynamicResource AppAccentColor}" />
-            <SolidColorBrush x:Key="AppAccentAltBrush" Color="{DynamicResource AppAccentAltColor}" />
-            <SolidColorBrush x:Key="AppSuccessBrush" Color="{DynamicResource AppSuccessColor}" />
-            <LinearGradientBrush x:Key="AppShellBrush" StartPoint="0%,0%" EndPoint="100%,100%">
-                <GradientStop Color="#E9F6FF" Offset="0" />
-                <GradientStop Color="#D8EEFF" Offset="0.58" />
-                <GradientStop Color="#FFF1B8" Offset="1" />
-            </LinearGradientBrush>
-            <LinearGradientBrush x:Key="AppCardBrush" StartPoint="0%,0%" EndPoint="100%,100%">
-                <GradientStop Color="#F7FCFF" Offset="0" />
-                <GradientStop Color="#EAF6FF" Offset="1" />
-            </LinearGradientBrush>
-        </ResourceDictionary>
-    </ResourceDictionary.ThemeDictionaries>
+    <Color x:Key="AppTextColor">#F7FAFF</Color>
+    <Color x:Key="AppMutedTextColor">#9EAAC1</Color>
+    <Color x:Key="AppBackgroundColor">#050912</Color>
+    <Color x:Key="AppPanelColor">#151B2B</Color>
+    <Color x:Key="AppPanelAltColor">#1A2236</Color>
+    <Color x:Key="AppPanelHoverColor">#22304E</Color>
+    <Color x:Key="AppBorderColor">#314162</Color>
+    <Color x:Key="AppAccentColor">#75C7FF</Color>
+    <Color x:Key="AppAccentAltColor">#B77DFF</Color>
+    <Color x:Key="AppSuccessColor">#5CE3A1</Color>
+    <Color x:Key="AppWarningColor">#FFD166</Color>
+    <SolidColorBrush x:Key="AppTextBrush" Color="{DynamicResource AppTextColor}" />
+    <SolidColorBrush x:Key="AppMutedTextBrush" Color="{DynamicResource AppMutedTextColor}" />
+    <SolidColorBrush x:Key="AppBackgroundBrush" Color="{DynamicResource AppBackgroundColor}" />
+    <SolidColorBrush x:Key="AppPanelBrush" Color="{DynamicResource AppPanelColor}" Opacity="0.82" />
+    <SolidColorBrush x:Key="AppPanelAltBrush" Color="{DynamicResource AppPanelAltColor}" Opacity="0.78" />
+    <SolidColorBrush x:Key="AppPanelHoverBrush" Color="{DynamicResource AppPanelHoverColor}" Opacity="0.9" />
+    <SolidColorBrush x:Key="AppBorderBrush" Color="{DynamicResource AppBorderColor}" Opacity="0.86" />
+    <SolidColorBrush x:Key="AppAccentBrush" Color="{DynamicResource AppAccentColor}" />
+    <SolidColorBrush x:Key="AppAccentAltBrush" Color="{DynamicResource AppAccentAltColor}" />
+    <SolidColorBrush x:Key="AppSuccessBrush" Color="{DynamicResource AppSuccessColor}" />
+    <SolidColorBrush x:Key="AppWarningBrush" Color="{DynamicResource AppWarningColor}" />
+    <LinearGradientBrush x:Key="AppShellBrush" StartPoint="0%,0%" EndPoint="100%,100%">
+        <GradientStop Color="#050912" Offset="0" />
+        <GradientStop Color="#0B1630" Offset="0.48" />
+        <GradientStop Color="#21133F" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="AppCardBrush" StartPoint="0%,0%" EndPoint="100%,100%">
+        <GradientStop Color="#25324D" Offset="0" />
+        <GradientStop Color="#111827" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="MistGlowBrush" StartPoint="0%,0%" EndPoint="100%,100%">
+        <GradientStop Color="#667DFF" Offset="0" />
+        <GradientStop Color="#79E8FF" Offset="0.5" />
+        <GradientStop Color="#B77DFF" Offset="1" />
+    </LinearGradientBrush>
 </ResourceDictionary>

@@ -4,161 +4,153 @@
              xmlns:vm="using:PCOptimizer.ViewModels"
              x:Class="PCOptimizer.Views.OptimizationPanelView"
              x:DataType="vm:OptimizationPanelViewModel">
-    <Border Classes="card"
-            Background="{DynamicResource AppCardBrush}"
-            BorderBrush="{DynamicResource AppBorderBrush}"
-            BorderThickness="1"
-            CornerRadius="22"
-            Padding="18"
-            BoxShadow="0 18 45 #33000000">
-        <Grid RowDefinitions="Auto,Auto,Auto,*,Auto,Auto" MinHeight="0">
-            <StackPanel Grid.Row="0" Spacing="6">
-                <TextBlock Text="{Binding Title}" Foreground="{DynamicResource AppTextBrush}" FontSize="22" FontWeight="SemiBold" TextWrapping="Wrap" />
+    <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="14" MinHeight="0">
+        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
+            <StackPanel Spacing="5">
+                <TextBlock Text="{Binding Title}" Foreground="{DynamicResource AppTextBrush}" FontSize="28" FontWeight="SemiBold" TextWrapping="Wrap" />
                 <TextBlock Text="{Binding Subtitle}" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="13" TextWrapping="Wrap" />
             </StackPanel>
+            <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Top">
+                <Border Padding="14,10" CornerRadius="14" Background="{DynamicResource AppPanelAltBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1">
+                    <TextBlock Text="{Binding SelectedCountDisplay}" Foreground="{DynamicResource AppAccentBrush}" FontSize="13" FontWeight="SemiBold" />
+                </Border>
+                <TextBlock Text="{Binding CountDisplay}" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" HorizontalAlignment="Right" />
+            </StackPanel>
+        </Grid>
 
-            <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto" Margin="0,14,0,10">
-                <ComboBox ItemsSource="{Binding CategoryFilters}"
-                          SelectedItem="{Binding SelectedFilter}"
-                          MinWidth="150"
-                          Background="{DynamicResource AppPanelAltBrush}"
-                          Foreground="{DynamicResource AppTextBrush}" />
-                <Button Grid.Column="1" Content="Select All" Command="{Binding SelectAllCommand}" Margin="8,0,0,0" />
-                <Button Grid.Column="2" Content="Deselect All" Command="{Binding DeselectAllCommand}" Margin="8,0,0,0" />
-            </Grid>
+        <Grid Grid.Row="1" ColumnDefinitions="*,190,Auto,Auto" ColumnSpacing="10">
+            <TextBox PlaceholderText="Search optimizations" Text="{Binding SearchText, Mode=TwoWay}" />
+            <ComboBox Grid.Column="1"
+                      ItemsSource="{Binding CategoryFilters}"
+                      SelectedItem="{Binding SelectedFilter}"
+                      MinWidth="170" />
+            <Button Grid.Column="2" Content="Select All" Command="{Binding SelectAllCommand}" />
+            <Button Grid.Column="3" Content="Deselect All" Command="{Binding DeselectAllCommand}" />
+        </Grid>
 
-            <ProgressBar Grid.Row="2" Minimum="0" Maximum="1" Value="{Binding Progress}" Margin="0,0,0,12" />
-
-            <ScrollViewer Grid.Row="3"
-                          VerticalScrollBarVisibility="Auto"
-                          HorizontalScrollBarVisibility="Disabled"
-                          Padding="0,0,6,0">
-                <StackPanel>
-                    <TextBlock Text="{Binding EmptyStateText}"
-                               Foreground="{DynamicResource AppMutedTextBrush}"
-                               FontSize="12"
-                               TextWrapping="Wrap"
-                               Margin="0,0,0,10" />
-                    <ItemsControl ItemsSource="{Binding FilteredCategories}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="models:OptimizationCategory">
-                                <Border Background="{DynamicResource AppPanelBrush}"
-                                        BorderBrush="{DynamicResource AppBorderBrush}"
-                                        BorderThickness="1"
-                                        CornerRadius="14"
-                                        Padding="12"
-                                        Margin="0,0,0,10">
-                                    <StackPanel Spacing="10">
+        <ScrollViewer Grid.Row="2"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled"
+                      Padding="0,0,8,0"
+                      MinHeight="0">
+            <StackPanel>
+                <TextBlock Text="{Binding EmptyStateText}"
+                           Foreground="{DynamicResource AppMutedTextBrush}"
+                           FontSize="12"
+                           TextWrapping="Wrap"
+                           Margin="0,0,0,10" />
+                <ItemsControl ItemsSource="{Binding FilteredCategories}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="models:OptimizationCategory">
+                            <Border Background="{DynamicResource AppPanelAltBrush}"
+                                    BorderBrush="{DynamicResource AppBorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="18"
+                                    Padding="14"
+                                    Margin="0,0,0,12">
+                                <StackPanel Spacing="10">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
                                         <CheckBox IsThreeState="True"
                                                   IsChecked="{Binding SelectionState, Mode=TwoWay}"
-                                                  Content="{Binding Name}"
-                                                  FontWeight="SemiBold" />
-                                        <ItemsControl ItemsSource="{Binding Actions}">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate x:DataType="models:OptimizationAction">
-                                                    <Border Background="{DynamicResource AppPanelAltBrush}"
-                                                            CornerRadius="12"
-                                                            Padding="10"
-                                                            Margin="0,0,0,8">
-                                                        <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto">
-                                                            <CheckBox Grid.RowSpan="3"
-                                                                      IsChecked="{Binding IsSelected, Mode=TwoWay}"
-                                                                      IsEnabled="{Binding IsEnabled}"
-                                                                      VerticalAlignment="Top"
-                                                                      Margin="0,2,10,0" />
-                                                            <TextBlock Grid.Column="1"
-                                                                       Text="{Binding Name}"
+                                                  VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Name}" Foreground="{DynamicResource AppTextBrush}" FontSize="16" FontWeight="SemiBold" />
+                                        <TextBlock Grid.Column="2" Text="{Binding CountDisplay}" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" VerticalAlignment="Center" />
+                                    </Grid>
+                                    <ItemsControl ItemsSource="{Binding Actions}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="models:OptimizationAction">
+                                                <Border Background="{DynamicResource AppPanelBrush}"
+                                                        BorderBrush="{DynamicResource AppBorderBrush}"
+                                                        BorderThickness="1"
+                                                        CornerRadius="14"
+                                                        Padding="12"
+                                                        Margin="0,0,0,8"
+                                                        Opacity="{Binding RowOpacity}"
+                                                        Cursor="Hand"
+                                                        PointerReleased="OnOptimizationActionPointerReleased">
+                                                    <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+                                                        <CheckBox Grid.RowSpan="4"
+                                                                  IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                                  IsEnabled="{Binding IsEnabled}"
+                                                                  VerticalAlignment="Top"
+                                                                  Margin="0,2,10,0" />
+                                                        <Grid Grid.Column="1" ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                                            <TextBlock Text="{Binding Name}"
                                                                        Foreground="{DynamicResource AppTextBrush}"
                                                                        FontWeight="SemiBold"
+                                                                       FontSize="14"
                                                                        TextWrapping="Wrap" />
-                                                            <TextBlock Grid.Row="1"
-                                                                       Grid.Column="1"
-                                                                       Text="{Binding Description}"
-                                                                       Foreground="{DynamicResource AppMutedTextBrush}"
-                                                                       FontSize="12"
-                                                                       TextWrapping="Wrap"
-                                                                       Margin="0,4,0,8" />
-                                                            <WrapPanel Grid.Row="2" Grid.Column="1">
-                                                                <Border Background="{DynamicResource AppAccentBrush}" CornerRadius="7" Padding="7,3" Margin="0,0,6,4">
-                                                                    <TextBlock Text="{Binding Category}" Foreground="White" FontSize="11" />
-                                                                </Border>
-                                                                <Border Background="{DynamicResource AppPanelBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1" CornerRadius="7" Padding="7,3" Margin="0,0,6,4">
-                                                                    <TextBlock Text="{Binding RiskBadge}" Foreground="{DynamicResource AppTextBrush}" FontSize="11" />
-                                                                </Border>
-                                                                <Border Background="{DynamicResource AppPanelBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1" CornerRadius="7" Padding="7,3" Margin="0,0,6,4">
-                                                                    <TextBlock Text="{Binding RestartBadge}" Foreground="{DynamicResource AppTextBrush}" FontSize="11" />
-                                                                </Border>
-                                                                <Border Background="{DynamicResource AppPanelBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1" CornerRadius="7" Padding="7,3" Margin="0,0,6,4">
-                                                                    <TextBlock Text="{Binding AdminBadge}" Foreground="{DynamicResource AppTextBrush}" FontSize="11" />
-                                                                </Border>
-                                                                <Border Background="{DynamicResource AppSuccessBrush}" CornerRadius="7" Padding="7,3" Margin="0,0,6,4">
-                                                                    <TextBlock Text="{Binding Status}" Foreground="White" FontSize="11" />
-                                                                </Border>
-                                                                <Border Background="{DynamicResource AppPanelBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1" CornerRadius="7" Padding="7,3" Margin="0,0,6,4">
-                                                                    <TextBlock Text="{Binding ImplementationBadge}" Foreground="{DynamicResource AppTextBrush}" FontSize="11" />
-                                                                </Border>
-                                                                <Border Background="{DynamicResource AppPanelBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1" CornerRadius="7" Padding="7,3" Margin="0,0,6,4">
-                                                                    <TextBlock Text="{Binding RevertBadge}" Foreground="{DynamicResource AppTextBrush}" FontSize="11" />
-                                                                </Border>
-                                                            </WrapPanel>
-                                                            <TextBlock Grid.Row="3"
-                                                                       Grid.Column="1"
-                                                                       Text="{Binding DisabledReason}"
-                                                                       Foreground="{DynamicResource AppWarningBrush}"
-                                                                       FontSize="11"
-                                                                       TextWrapping="Wrap"
-                                                                       Margin="0,6,0,0" />
-                                                            <TextBlock Grid.Row="4"
-                                                                       Grid.Column="1"
-                                                                       Text="{Binding ExactAction}"
-                                                                       Foreground="{DynamicResource AppMutedTextBrush}"
-                                                                       FontSize="11"
-                                                                       TextWrapping="Wrap"
-                                                                       Margin="0,3,0,0" />
-                                                            <TextBlock Grid.Row="5"
-                                                                       Grid.Column="1"
-                                                                       Text="{Binding UndoAction}"
-                                                                       Foreground="{DynamicResource AppMutedTextBrush}"
-                                                                       FontSize="11"
-                                                                       TextWrapping="Wrap"
-                                                                       Margin="0,3,0,0" />
-                                                            <TextBlock Grid.Row="6"
-                                                                       Grid.Column="1"
-                                                                       Text="{Binding Source, StringFormat='Source: {0}'}"
-                                                                       Foreground="{DynamicResource AppMutedTextBrush}"
-                                                                       FontSize="11"
-                                                                       TextWrapping="Wrap"
-                                                                       Margin="0,3,0,0" />
+                                                            <Border Grid.Column="1" Width="26" Height="26" CornerRadius="13" Background="{DynamicResource MistGlowBrush}" VerticalAlignment="Top" IsVisible="{Binding IsSelected}">
+                                                                <TextBlock Text="{Binding SelectionMark}" Foreground="#06111F" FontSize="15" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                            </Border>
                                                         </Grid>
-                                                    </Border>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                    </StackPanel>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
-            </ScrollViewer>
+                                                        <TextBlock Grid.Row="1"
+                                                                   Grid.Column="1"
+                                                                   Text="{Binding Description}"
+                                                                   Foreground="{DynamicResource AppMutedTextBrush}"
+                                                                   FontSize="12"
+                                                                   TextWrapping="Wrap"
+                                                                   Margin="0,4,0,8" />
+                                                        <WrapPanel Grid.Row="2" Grid.Column="1">
+                                                            <Border Background="{DynamicResource AppAccentBrush}" CornerRadius="8" Padding="8,4" Margin="0,0,6,6">
+                                                                <TextBlock Text="{Binding Category}" Foreground="#06111F" FontSize="11" FontWeight="SemiBold" />
+                                                            </Border>
+                                                            <Border Background="{DynamicResource AppPanelAltBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="8,4" Margin="0,0,6,6">
+                                                                <TextBlock Text="{Binding RiskBadge}" Foreground="{DynamicResource AppTextBrush}" FontSize="11" />
+                                                            </Border>
+                                                            <Border Background="{DynamicResource AppPanelAltBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="8,4" Margin="0,0,6,6">
+                                                                <TextBlock Text="{Binding RestartBadge}" Foreground="{DynamicResource AppTextBrush}" FontSize="11" />
+                                                            </Border>
+                                                            <Border Background="{DynamicResource AppPanelAltBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="8,4" Margin="0,0,6,6">
+                                                                <TextBlock Text="{Binding AdminBadge}" Foreground="{DynamicResource AppTextBrush}" FontSize="11" />
+                                                            </Border>
+                                                            <Border Background="{DynamicResource AppSuccessBrush}" CornerRadius="8" Padding="8,4" Margin="0,0,6,6">
+                                                                <TextBlock Text="{Binding Status}" Foreground="#06111F" FontSize="11" FontWeight="SemiBold" />
+                                                            </Border>
+                                                            <Border Background="{DynamicResource AppPanelAltBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="8,4" Margin="0,0,6,6">
+                                                                <TextBlock Text="{Binding ImplementationBadge}" Foreground="{DynamicResource AppTextBrush}" FontSize="11" />
+                                                            </Border>
+                                                        </WrapPanel>
+                                                        <TextBlock Grid.Row="3"
+                                                                   Grid.Column="1"
+                                                                   Text="{Binding DisabledReason}"
+                                                                   Foreground="{DynamicResource AppWarningBrush}"
+                                                                   FontSize="11"
+                                                                   TextWrapping="Wrap"
+                                                                   Margin="0,2,0,0" />
+                                                        <Expander Grid.Row="4" Grid.Column="1" Header="Details" Foreground="{DynamicResource AppTextBrush}" Margin="0,4,0,0">
+                                                            <StackPanel Spacing="4" Margin="0,8,0,0">
+                                                                <TextBlock Text="{Binding ExactAction}" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" TextWrapping="Wrap" />
+                                                                <TextBlock Text="{Binding UndoAction}" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" TextWrapping="Wrap" />
+                                                                <TextBlock Text="{Binding Source, StringFormat='Source: {0}'}" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" TextWrapping="Wrap" />
+                                                            </StackPanel>
+                                                        </Expander>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </ScrollViewer>
 
-            <TextBlock Grid.Row="4" Text="{Binding StatusText}" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" Margin="0,12,0,8" TextWrapping="Wrap" />
-            <Grid Grid.Row="5" ColumnDefinitions="*,*,*" ColumnSpacing="10">
-                <Button Content="Preview Changes"
-                        Command="{Binding PreviewSelectedCommand}"
-                        HorizontalAlignment="Stretch" />
-                <Button Grid.Column="1"
-                        Content="Revert Selected"
-                        Command="{Binding RevertSelectedCommand}"
-                        HorizontalAlignment="Stretch" />
-                <Button Grid.Column="2"
+        <Grid Grid.Row="3" RowDefinitions="Auto,Auto" RowSpacing="10">
+            <ProgressBar Minimum="0" Maximum="1" Value="{Binding Progress}" />
+            <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="10">
+                <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" VerticalAlignment="Center" TextWrapping="Wrap" />
+                <Button Grid.Column="1" Content="Preview" Command="{Binding PreviewSelectedCommand}" />
+                <Button Grid.Column="2" Content="Revert" Command="{Binding RevertSelectedCommand}" />
+                <Button Grid.Column="3"
                         Content="Apply Selected"
                         Command="{Binding ApplySelectedCommand}"
-                        HorizontalAlignment="Stretch"
-                        Background="{DynamicResource AppAccentBrush}"
-                        Foreground="White"
+                        Background="{DynamicResource MistGlowBrush}"
+                        Foreground="#06111F"
                         FontWeight="SemiBold" />
             </Grid>
         </Grid>
-    </Border>
+    </Grid>
 </UserControl>

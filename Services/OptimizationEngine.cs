@@ -31,7 +31,18 @@ public sealed class OptimizationEngine
         IProgress<double> progress,
         bool previewOnly)
     {
-        var selectedActions = actions.Where(action => action.IsSelected).ToList();
+        var actionList = actions.ToList();
+        var selectedDisabled = actionList.Where(action => action.IsSelected && !action.IsEnabled).ToList();
+        var selectedActions = actionList.Where(action => action.IsSelected && action.IsEnabled).ToList();
+        var unselectedRunnableCount = actionList.Count(action => action.IsEnabled && !action.IsSelected);
+
+        foreach (var action in selectedDisabled)
+        {
+            action.Status = OptimizationStatus.Skipped;
+            _logger.Warning($"{action.Name}: skipped because it is disabled or unavailable.");
+        }
+
+        _logger.Info($"{(previewOnly ? "Preview" : "Apply")} requested: {selectedActions.Count} selected runnable optimisation(s), {unselectedRunnableCount} runnable unselected optimisation(s) skipped, {selectedDisabled.Count} disabled selected optimisation(s) skipped.");
 
         if (selectedActions.Count == 0)
         {
@@ -56,6 +67,7 @@ public sealed class OptimizationEngine
                 {
                     action.Status = OptimizationStatus.Skipped;
                     LogPreview(action);
+                    _logger.Info($"{action.Name}: preview succeeded; no changes made.");
                     progress.Report((index + 1) / (double)selectedActions.Count);
                     continue;
                 }
@@ -81,7 +93,7 @@ public sealed class OptimizationEngine
                 else
                 {
                     action.Status = await RunImplementedActionAsync(action);
-                    _logger.Info($"{action.Name}: completed.");
+                    _logger.Info($"{action.Name}: completed with status {action.Status}.");
                 }
 
                 restartNeeded |= action.RequiresRestart && action.Status != OptimizationStatus.Failed;
@@ -100,7 +112,12 @@ public sealed class OptimizationEngine
 
     public async Task RevertSelectedAsync(IEnumerable<OptimizationAction> actions, IProgress<double> progress)
     {
-        var selectedActions = actions.Where(action => action.IsSelected).ToList();
+        var actionList = actions.ToList();
+        var selectedActions = actionList.Where(action => action.IsSelected && action.IsEnabled).ToList();
+        var skippedDisabled = actionList.Count(action => action.IsSelected && !action.IsEnabled);
+        var skippedUnselected = actionList.Count(action => action.IsEnabled && !action.IsSelected);
+
+        _logger.Info($"Revert requested: {selectedActions.Count} selected runnable optimisation(s), {skippedUnselected} runnable unselected optimisation(s) skipped, {skippedDisabled} disabled selected optimisation(s) skipped.");
 
         if (selectedActions.Count == 0)
         {

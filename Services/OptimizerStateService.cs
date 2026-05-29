@@ -16,8 +16,8 @@ public sealed class OptimizerStateService
     public OptimizerStateService()
     {
         var folder = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "PCOptimizer");
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "Mist");
 
         Directory.CreateDirectory(folder);
         StatePath = Path.Combine(folder, "optimizer-state.json");

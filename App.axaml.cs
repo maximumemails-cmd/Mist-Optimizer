@@ -21,13 +21,13 @@ public partial class App : Application
             var logger = new AppLogger();
             var settingsService = new SettingsService();
             var settings = settingsService.Load();
-            var themeService = new ThemeService(settingsService, settings);
             var systemInfoService = new SystemInfoService();
-            var catalogService = new OptimizationCatalogService();
+            var catalogService = new OptimizationCatalogService(logger);
             var windowsCommandService = new WindowsCommandService(logger);
             var optimizerStateService = new OptimizerStateService();
             var optimizationEngine = new OptimizationEngine(logger, systemInfoService, windowsCommandService, optimizerStateService);
-            var processService = new ProcessService();
+            var protectedProcessHelper = new ProtectedProcessHelper();
+            var processService = new ProcessService(protectedProcessHelper);
             var ramCleanerService = new RamCleanerService(logger, processService, systemInfoService);
             _ = new BackupService(logger, settingsService);
 
@@ -36,7 +36,6 @@ public partial class App : Application
                 DataContext = new MainWindowViewModel(
                     logger,
                     settingsService,
-                    themeService,
                     catalogService,
                     optimizationEngine,
                     ramCleanerService,

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Windows.Input;
@@ -20,18 +21,16 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     private readonly SystemInfoService _systemInfoService;
     private readonly AppSettings _settings;
     private readonly DispatcherTimer _liveStatsTimer;
-    private DashboardViewModel _dashboard;
     private bool _isRestartPromptOpen;
     private bool _areAnimationsPaused;
     private double _globalProgress;
-    private bool _showAdvancedTweaks;
     private HardwareSummary _hardwareSummary;
+    private AppPageViewModel _currentPage;
     private bool _isDisposed;
 
     public MainWindowViewModel(
         AppLogger logger,
         SettingsService settingsService,
-        ThemeService themeService,
         OptimizationCatalogService catalogService,
         OptimizationEngine optimizationEngine,
         RamCleanerService ramCleanerService,
@@ -45,16 +44,63 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         _ramCleanerService = ramCleanerService;
         _systemInfoService = systemInfoService;
         _settings = settings;
-        _showAdvancedTweaks = _settings.ShowAdvancedTweaks;
 
-        ThemeToggle = new ThemeToggleViewModel(themeService);
+        Brand = new BrandAssets();
         LogPanel = new LogPanelViewModel(logger);
         _hardwareSummary = _systemInfoService.GetHardwareSummary();
-        _dashboard = BuildDashboard();
 
+        Home = new HomePageViewModel();
+        RamCleaner = new RamCleanerPanelViewModel(_ramCleanerService, _settings, _settingsService);
+        PcSpecs = new PcSpecsPageViewModel(_systemInfoService);
+
+        var actions = _catalogService.GetAll(_settings.SelectedOptimizationIds).ToList();
+        LogCatalogReport(_catalogService.LastReport, actions);
+
+        foreach (var action in actions)
+        {
+            action.PropertyChanged += OnActionPropertyChanged;
+        }
+
+        RestartOptimizations = new OptimizationPanelViewModel(
+            "Restart Optimizations",
+            "System-level changes that need a restart or deeper review.",
+            true,
+            actions.Where(action => action.RequiresRestart),
+            _optimizationEngine,
+            _logger);
+
+        LiveOptimizations = new OptimizationPanelViewModel(
+            "Live Optimizations",
+            "Actions that can run or preview during the current session.",
+            false,
+            actions.Where(action => !action.RequiresRestart),
+            _optimizationEngine,
+            _logger);
+
+        RamCleaner.ProgressChanged += OnChildProgressChanged;
+        RestartOptimizations.ProgressChanged += OnChildProgressChanged;
+        LiveOptimizations.ProgressChanged += OnChildProgressChanged;
+        RestartOptimizations.RestartRequiredCompleted += (_, _) => IsRestartPromptOpen = true;
+
+        Pages =
+        [
+            new AppPageViewModel("Home", "System health", Home),
+            new AppPageViewModel("RAM Cleaner", "Live memory", RamCleaner),
+            new AppPageViewModel("PC Specs", "Hardware profile", PcSpecs),
+            new AppPageViewModel("Restart Optimizations", "Restart-aware", RestartOptimizations),
+            new AppPageViewModel("Live Optimizations", "In-session", LiveOptimizations)
+        ];
+
+        _currentPage = Pages[0];
+        _currentPage.IsCurrent = true;
+        RefreshHome();
+
+        NextPageCommand = new RelayCommand(_ => Navigate(1));
+        PreviousPageCommand = new RelayCommand(_ => Navigate(-1));
         RestartNowCommand = new RelayCommand(_ => RestartNowPlaceholder());
         RestartLaterCommand = new RelayCommand(_ => IsRestartPromptOpen = false);
         RefreshHardwareCommand = new RelayCommand(_ => RefreshHardwareSummary());
+
         _liveStatsTimer = new DispatcherTimer
         {
             Interval = TimeSpan.FromSeconds(1)
@@ -62,21 +108,47 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         _liveStatsTimer.Tick += (_, _) => RefreshLiveStats();
         _liveStatsTimer.Start();
 
-        _logger.Info("PC Optimizer started in safe optimisation framework mode.");
+        _logger.Info("Mist started in dark dashboard mode.");
         _logger.Info($"Settings loaded from {_settingsService.SettingsPath}");
     }
 
-    public ThemeToggleViewModel ThemeToggle { get; }
+    public BrandAssets Brand { get; }
     public LogPanelViewModel LogPanel { get; }
+    public HomePageViewModel Home { get; }
+    public RamCleanerPanelViewModel RamCleaner { get; }
+    public PcSpecsPageViewModel PcSpecs { get; }
+    public OptimizationPanelViewModel RestartOptimizations { get; }
+    public OptimizationPanelViewModel LiveOptimizations { get; }
+    public ObservableCollection<AppPageViewModel> Pages { get; }
+    public ICommand NextPageCommand { get; }
+    public ICommand PreviousPageCommand { get; }
     public ICommand RestartNowCommand { get; }
     public ICommand RestartLaterCommand { get; }
     public ICommand RefreshHardwareCommand { get; }
 
-    public DashboardViewModel Dashboard
+    public AppPageViewModel CurrentPage
     {
-        get => _dashboard;
-        private set => SetProperty(ref _dashboard, value);
+        get => _currentPage;
+        private set
+        {
+            if (_currentPage == value)
+            {
+                return;
+            }
+
+            _currentPage.IsCurrent = false;
+            value.IsCurrent = true;
+
+            if (SetProperty(ref _currentPage, value))
+            {
+                OnPropertyChanged(nameof(PageIndicatorText));
+                OnPropertyChanged(nameof(CurrentPageTitle));
+            }
+        }
     }
+
+    public string PageIndicatorText => $"{Pages.IndexOf(CurrentPage) + 1} / {Pages.Count}";
+    public string CurrentPageTitle => CurrentPage.Title;
 
     public bool IsRestartPromptOpen
     {
@@ -108,57 +180,18 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         set => SetProperty(ref _globalProgress, value);
     }
 
-    public bool ShowAdvancedTweaks
+    public int TotalOptimizationCount => RestartOptimizations.TotalCount + LiveOptimizations.TotalCount;
+    public int RestartRequiredCount => RestartOptimizations.TotalCount;
+
+    public void Navigate(int direction)
     {
-        get => _showAdvancedTweaks;
-        set
+        if (Pages.Count == 0)
         {
-            if (!SetProperty(ref _showAdvancedTweaks, value))
-            {
-                return;
-            }
-
-            _settings.ShowAdvancedTweaks = value;
-            _settingsService.Save(_settings);
-            Dashboard = BuildDashboard();
-            _logger.Info(value ? "Advanced tweaks are visible." : "Advanced tweaks are hidden.");
-        }
-    }
-
-    private DashboardViewModel BuildDashboard()
-    {
-        var actions = _catalogService.GetAll(_settings.SelectedOptimizationIds).ToList();
-        LogCatalogReport(_catalogService.LastReport, actions);
-
-        foreach (var action in actions)
-        {
-            action.PropertyChanged += OnActionPropertyChanged;
+            return;
         }
 
-        var restartPanel = new OptimizationPanelViewModel(
-            "Restart Required Optimisations",
-            "Changes that would need a restart when safely implemented.",
-            true,
-            actions.Where(action => action.RequiresRestart),
-            _optimizationEngine,
-            _logger);
-
-        var noRestartPanel = new OptimizationPanelViewModel(
-            "No-Restart Optimisations",
-            "Implemented safe actions that can finish in-session.",
-            false,
-            actions.Where(action => !action.RequiresRestart),
-            _optimizationEngine,
-            _logger);
-
-        var ramPanel = new RamCleanerPanelViewModel(_ramCleanerService, _settings, _settingsService);
-
-        restartPanel.ProgressChanged += OnChildProgressChanged;
-        noRestartPanel.ProgressChanged += OnChildProgressChanged;
-        ramPanel.ProgressChanged += OnChildProgressChanged;
-        restartPanel.RestartRequiredCompleted += (_, _) => IsRestartPromptOpen = true;
-
-        return new DashboardViewModel(restartPanel, noRestartPanel, ramPanel);
+        var nextIndex = (Pages.IndexOf(CurrentPage) + direction + Pages.Count) % Pages.Count;
+        CurrentPage = Pages[nextIndex];
     }
 
     private void OnActionPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -178,6 +211,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         }
 
         _settingsService.Save(_settings);
+        RefreshHome();
     }
 
     private void LogCatalogReport(OptimizationCatalogReport report, IReadOnlyList<OptimizationAction> actions)
@@ -186,24 +220,29 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
 
         if (report.BatchFileCount == 0)
         {
-            _logger.Warning("Optimizerstuff was not found or no .bat files were found. Batch-derived catalogue rows are still shown from the static audit, but live scan counts are unavailable.");
+            _logger.Warning("Optimizerstuff was not found or no .bat files were found. Static audited rows remain visible.");
+        }
+
+        if (report.LoadingFailureCount > 0)
+        {
+            _logger.Warning($"Optimizerstuff loading failures: {report.LoadingFailureCount}.");
         }
 
         _logger.Info($"Batch files found: {report.BatchFileCount}");
         _logger.Info($"Commands/settings parsed: {report.ParsedCommandCount}");
         _logger.Info($"Classified safe: {report.SafeCount}; caution: {report.CautionCount}; dangerous: {report.DangerousCount}; conflicts: {report.ConflictCount}.");
-        _logger.Info($"Restart-required visible rows: {report.VisibleRestartCount}; no-restart visible rows: {report.VisibleNoRestartCount}; restart unknown: {report.UnknownRestartCount}.");
+        _logger.Info($"Restart-required visible rows: {report.VisibleRestartCount}; live visible rows: {report.VisibleNoRestartCount}; restart unknown: {report.UnknownRestartCount}.");
         _logger.Info($"Applyable rows: {report.ApplyableCount}; disabled rows: {report.DisabledCount}; duplicate command/source references consolidated: {report.DuplicateCount}.");
-        _logger.Info($"UI restart panel rows: {actions.Count(action => action.RequiresRestart)}; UI no-restart panel rows: {actions.Count(action => !action.RequiresRestart)}.");
+        _logger.Info($"UI restart page rows: {actions.Count(action => action.RequiresRestart)}; UI live page rows: {actions.Count(action => !action.RequiresRestart)}.");
     }
 
     private void OnChildProgressChanged(object? sender, double progress)
     {
         var values = new List<double>
         {
-            Dashboard.RestartPanel.Progress,
-            Dashboard.NoRestartPanel.Progress,
-            Dashboard.RamCleanerPanel.Progress
+            RestartOptimizations.Progress,
+            LiveOptimizations.Progress,
+            RamCleaner.Progress
         };
 
         GlobalProgress = values.Average();
@@ -226,8 +265,10 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     private void RefreshHardwareSummary()
     {
         HardwareSummary = _systemInfoService.GetHardwareSummary();
-        Dashboard.RamCleanerPanel.RefreshStatsCommand.Execute(null);
-        _logger.Info("Hardware summary and process count refreshed.");
+        RamCleaner.RefreshStatsCommand.Execute(null);
+        PcSpecs.Refresh();
+        RefreshHome();
+        _logger.Info("Hardware summary, specs, and RAM statistics refreshed.");
     }
 
     private void RefreshLiveStats()
@@ -247,7 +288,19 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
             Processes = _systemInfoService.GetProcessCountDisplay()
         };
 
-        Dashboard.RamCleanerPanel.RefreshLiveStats();
+        RamCleaner.RefreshLiveStats();
+        RefreshHome();
+    }
+
+    private void RefreshHome()
+    {
+        Home.Refresh(
+            HardwareSummary,
+            RamCleaner.MemoryStats,
+            TotalOptimizationCount,
+            RestartRequiredCount);
+        OnPropertyChanged(nameof(TotalOptimizationCount));
+        OnPropertyChanged(nameof(RestartRequiredCount));
     }
 
     private void UpdateLivePollingState()

@@ -8,10 +8,16 @@ namespace PCOptimizer.Services;
 
 public sealed class OptimizationCatalogService
 {
-    private const string NotImplementedReason = "Visible for transparency, but no safe apply handler has been written yet.";
-    private const string NeedsReviewReason = "Disabled until this system-level change has backup, verification, and a safer user flow.";
+    private const string NotImplementedReason = "Selectable for review. Mist will log that no safe apply handler exists yet.";
+    private const string NeedsReviewReason = "Selectable for review. Admin, restart, and validation warnings do not make this unavailable.";
     private const string DangerousReason = "Disabled for safety because this can break Windows, networking, security, recovery, apps, or normal laptop use.";
     private const string ConflictReason = "Disabled because the audited batch files contain conflicting values for this setting.";
+    private readonly AppLogger? _logger;
+
+    public OptimizationCatalogService(AppLogger? logger = null)
+    {
+        _logger = logger;
+    }
 
     public OptimizationCatalogReport LastReport { get; private set; } = new();
 
@@ -21,10 +27,12 @@ public sealed class OptimizationCatalogService
         var batchFiles = optimizerstuffPath is null
             ? Array.Empty<string>()
             : Directory.GetFiles(optimizerstuffPath, "*.bat", SearchOption.AllDirectories);
-        var parsedCommandCount = batchFiles.Sum(CountCommandLikeLines);
+        var loadingFailures = 0;
+        var parsedCommandCount = batchFiles.Sum(path => CountCommandLikeLines(path, ref loadingFailures));
 
         var actions = BuiltInActions()
             .Concat(BatchAuditActions())
+            .Concat(ParseOptimizerstuffActions(batchFiles, ref loadingFailures))
             .GroupBy(action => action.Id, StringComparer.OrdinalIgnoreCase)
             .Select(group => MergeDuplicateSources(group.ToList()))
             .ToList();
@@ -34,7 +42,7 @@ public sealed class OptimizationCatalogService
             action.IsSelected = selectedIds.Contains(action.Id) && action.IsEnabled;
         }
 
-        LastReport = BuildReport(actions, optimizerstuffPath, batchFiles.Length, parsedCommandCount);
+        LastReport = BuildReport(actions, optimizerstuffPath, batchFiles.Length, parsedCommandCount, loadingFailures);
         return actions;
     }
 
@@ -194,7 +202,7 @@ public sealed class OptimizationCatalogService
         string source,
         string reversibility)
     {
-        return Disabled(id, name, description, category, requiresRestart, requiresAdmin, riskLevel, implementationStatus, disabledReason, source, reversibility, requiresRestart ? "Restart required" : "No restart");
+        return CatalogAction(id, name, description, category, requiresRestart, requiresAdmin, riskLevel, implementationStatus, disabledReason, source, reversibility, requiresRestart ? "Restart required" : "No restart");
     }
 
     private static OptimizationAction Batch(
@@ -211,10 +219,10 @@ public sealed class OptimizationCatalogService
         string reversibility,
         string restartBadgeText)
     {
-        return Disabled(id, name, description, category, requiresRestart, requiresAdmin, riskLevel, implementationStatus, disabledReason, source, reversibility, restartBadgeText);
+        return CatalogAction(id, name, description, category, requiresRestart, requiresAdmin, riskLevel, implementationStatus, disabledReason, source, reversibility, restartBadgeText);
     }
 
-    private static OptimizationAction Disabled(
+    private static OptimizationAction CatalogAction(
         string id,
         string name,
         string description,
@@ -228,17 +236,19 @@ public sealed class OptimizationCatalogService
         string reversibility,
         string restartBadgeText)
     {
+        var isUnavailable = IsExplicitlyUnavailable(riskLevel, implementationStatus, disabledReason);
+
         return new OptimizationAction
         {
             Id = id,
             Name = name,
             Description = description,
             Category = category,
-            ExactAction = "Disabled: no command can run from this row.",
+            ExactAction = isUnavailable ? "Unavailable: no safe command can run from this row." : "Selectable: Mist will preview/log this action unless a safe apply handler exists.",
             UndoAction = reversibility == "Yes" ? "A future implementation must save and restore the original value first." : "No safe revert path is currently available.",
             Source = source,
             ImplementationStatus = implementationStatus,
-            DisabledReason = disabledReason,
+            DisabledReason = isUnavailable ? disabledReason : string.Empty,
             RestartBadgeText = restartBadgeText,
             Reversibility = reversibility,
             RequiresRestart = requiresRestart,
@@ -246,9 +256,9 @@ public sealed class OptimizationCatalogService
             RequiresSystemWarning = requiresAdmin || requiresRestart || riskLevel != RiskLevel.Safe,
             RiskLevel = riskLevel,
             IsImplemented = false,
-            IsEnabled = false,
+            IsEnabled = !isUnavailable,
             Reversible = reversibility == "Yes",
-            Status = implementationStatus == "Disabled for safety"
+            Status = isUnavailable
                 ? OptimizationStatus.Skipped
                 : OptimizationStatus.NotImplemented
         };
@@ -288,13 +298,72 @@ public sealed class OptimizationCatalogService
         };
     }
 
-    private static OptimizationCatalogReport BuildReport(IReadOnlyList<OptimizationAction> actions, string? optimizerstuffPath, int batchFileCount, int parsedCommandCount)
+    private IEnumerable<OptimizationAction> ParseOptimizerstuffActions(IEnumerable<string> batchFiles, ref int loadingFailures)
+    {
+        var actions = new List<OptimizationAction>();
+
+        foreach (var path in batchFiles)
+        {
+            IEnumerable<(int LineNumber, string Command)> commands;
+
+            try
+            {
+                commands = File.ReadLines(path)
+                    .Select((line, index) => (LineNumber: index + 1, Command: line.Trim()))
+                    .Where(item => IsCommandLikeLine(item.Command))
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                loadingFailures++;
+                _logger?.Error($"Failed to load Optimizerstuff file {path}: {ex.Message}");
+                continue;
+            }
+
+            foreach (var command in commands)
+            {
+                var category = CategorizeCommand(command.Command);
+                var fileName = Path.GetFileName(path);
+                var id = $"optimizerstuff-{SanitizeId(fileName)}-{command.LineNumber}";
+
+                actions.Add(new OptimizationAction
+                {
+                    Id = id,
+                    Name = $"Optimizerstuff: {SummarizeCommand(command.Command)}",
+                    Description = "Imported directly from Optimizerstuff so the definition remains visible for review.",
+                    Category = category,
+                    ExactAction = command.Command,
+                    UndoAction = "No safe automatic revert is available until this imported command is reviewed.",
+                    Source = $"{fileName}:{command.LineNumber}",
+                    ImplementationStatus = "Imported for review",
+                    DisabledReason = NeedsReviewReason,
+                    RestartBadgeText = InferRestartBadge(command.Command),
+                    Reversibility = "Unknown",
+                    RequiresRestart = InferRequiresRestart(command.Command),
+                    RequiresAdmin = true,
+                    RequiresSystemWarning = true,
+                    RiskLevel = RiskLevel.Advanced,
+                    IsImplemented = false,
+                    IsEnabled = IsSupportedImportedCommand(command.Command),
+                    Reversible = false,
+                    Status = IsSupportedImportedCommand(command.Command)
+                        ? OptimizationStatus.NotImplemented
+                        : OptimizationStatus.Skipped
+                });
+            }
+        }
+
+        return actions;
+    }
+
+    private static OptimizationCatalogReport BuildReport(IReadOnlyList<OptimizationAction> actions, string? optimizerstuffPath, int batchFileCount, int parsedCommandCount, int loadingFailures)
     {
         return new OptimizationCatalogReport
         {
             OptimizerstuffPath = optimizerstuffPath ?? "Not found",
             BatchFileCount = batchFileCount,
             ParsedCommandCount = parsedCommandCount,
+            LoadingFailureCount = loadingFailures,
             SafeCount = actions.Count(action => action.RiskLevel == RiskLevel.Safe),
             CautionCount = actions.Count(action => action.RiskLevel is RiskLevel.Moderate or RiskLevel.Advanced),
             DangerousCount = actions.Count(action => action.RiskLevel == RiskLevel.Dangerous),
@@ -338,29 +407,112 @@ public sealed class OptimizationCatalogService
         }
     }
 
-    private static int CountCommandLikeLines(string path)
+    private static int CountCommandLikeLines(string path, ref int loadingFailures)
     {
         try
         {
-            return File.ReadLines(path).Count(line =>
-            {
-                var trimmed = line.TrimStart();
-                return trimmed.StartsWith("netsh ", StringComparison.OrdinalIgnoreCase)
-                    || trimmed.StartsWith("ipconfig ", StringComparison.OrdinalIgnoreCase)
-                    || trimmed.StartsWith("reg ", StringComparison.OrdinalIgnoreCase)
-                    || trimmed.StartsWith("reg.exe ", StringComparison.OrdinalIgnoreCase)
-                    || trimmed.StartsWith("REG ADD ", StringComparison.OrdinalIgnoreCase)
-                    || trimmed.StartsWith("powershell ", StringComparison.OrdinalIgnoreCase)
-                    || trimmed.StartsWith("wmic ", StringComparison.OrdinalIgnoreCase)
-                    || trimmed.StartsWith("bcdedit ", StringComparison.OrdinalIgnoreCase)
-                    || trimmed.StartsWith("powercfg ", StringComparison.OrdinalIgnoreCase)
-                    || trimmed.StartsWith("PowerCfg ", StringComparison.OrdinalIgnoreCase)
-                    || trimmed.StartsWith("%JAVA_PATH%", StringComparison.OrdinalIgnoreCase);
-            });
+            return File.ReadLines(path).Count(line => IsCommandLikeLine(line.TrimStart()));
         }
         catch
         {
+            loadingFailures++;
             return 0;
         }
+    }
+
+    private static bool IsCommandLikeLine(string trimmed)
+    {
+        return trimmed.StartsWith("netsh ", StringComparison.OrdinalIgnoreCase)
+            || trimmed.StartsWith("ipconfig ", StringComparison.OrdinalIgnoreCase)
+            || trimmed.StartsWith("reg ", StringComparison.OrdinalIgnoreCase)
+            || trimmed.StartsWith("reg.exe ", StringComparison.OrdinalIgnoreCase)
+            || trimmed.StartsWith("REG ADD ", StringComparison.OrdinalIgnoreCase)
+            || trimmed.StartsWith("powershell ", StringComparison.OrdinalIgnoreCase)
+            || trimmed.StartsWith("wmic ", StringComparison.OrdinalIgnoreCase)
+            || trimmed.StartsWith("bcdedit ", StringComparison.OrdinalIgnoreCase)
+            || trimmed.StartsWith("powercfg ", StringComparison.OrdinalIgnoreCase)
+            || trimmed.StartsWith("PowerCfg ", StringComparison.OrdinalIgnoreCase)
+            || trimmed.StartsWith("%JAVA_PATH%", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsSupportedImportedCommand(string command)
+    {
+        return IsCommandLikeLine(command.TrimStart())
+            && !command.Contains("INVALID", StringComparison.OrdinalIgnoreCase)
+            && !command.Contains("undefined", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsExplicitlyUnavailable(RiskLevel riskLevel, string implementationStatus, string disabledReason)
+    {
+        if (riskLevel == RiskLevel.Dangerous ||
+            implementationStatus.Contains("Disabled for safety", StringComparison.OrdinalIgnoreCase) ||
+            implementationStatus.Contains("Conflict", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return disabledReason.Contains("invalid", StringComparison.OrdinalIgnoreCase) ||
+               disabledReason.Contains("no real optimisation", StringComparison.OrdinalIgnoreCase) ||
+               disabledReason.Contains("no real optimization", StringComparison.OrdinalIgnoreCase) ||
+               disabledReason.Contains("missing", StringComparison.OrdinalIgnoreCase) ||
+               disabledReason.Contains("undefined", StringComparison.OrdinalIgnoreCase) ||
+               disabledReason.Contains("hardcoded", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string CategorizeCommand(string command)
+    {
+        if (command.Contains("tcp", StringComparison.OrdinalIgnoreCase) ||
+            command.Contains("netsh", StringComparison.OrdinalIgnoreCase) ||
+            command.Contains("dns", StringComparison.OrdinalIgnoreCase) ||
+            command.Contains("ipconfig", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Network";
+        }
+
+        if (command.Contains("powercfg", StringComparison.OrdinalIgnoreCase) ||
+            command.Contains("bcdedit", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Power";
+        }
+
+        if (command.Contains("windowsupdate", StringComparison.OrdinalIgnoreCase) ||
+            command.Contains("deliveryoptimization", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Drivers / Updates";
+        }
+
+        if (command.Contains("java", StringComparison.OrdinalIgnoreCase) ||
+            command.Contains("game", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Gaming";
+        }
+
+        return "Uncategorized";
+    }
+
+    private static bool InferRequiresRestart(string command)
+    {
+        return command.Contains("bcdedit", StringComparison.OrdinalIgnoreCase)
+            || command.Contains(@"HKLM\SYSTEM", StringComparison.OrdinalIgnoreCase)
+            || command.Contains("Tcpip", StringComparison.OrdinalIgnoreCase)
+            || command.Contains("reboot", StringComparison.OrdinalIgnoreCase)
+            || command.Contains("restart", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string InferRestartBadge(string command)
+    {
+        return InferRequiresRestart(command) ? "Restart likely" : "Restart unknown";
+    }
+
+    private static string SummarizeCommand(string command)
+    {
+        var text = command.Length > 54 ? $"{command[..54]}..." : command;
+        return text.Replace("\t", " ");
+    }
+
+    private static string SanitizeId(string text)
+    {
+        var chars = text.Select(ch => char.IsLetterOrDigit(ch) ? char.ToLowerInvariant(ch) : '-').ToArray();
+        return new string(chars).Trim('-');
     }
 }

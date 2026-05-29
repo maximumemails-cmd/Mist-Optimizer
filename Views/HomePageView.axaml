@@ -1,0 +1,80 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:PCOptimizer.ViewModels"
+             x:Class="PCOptimizer.Views.HomePageView"
+             x:DataType="vm:HomePageViewModel">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <Grid RowDefinitions="Auto,Auto,*" RowSpacing="18">
+            <Border CornerRadius="28"
+                    Padding="28"
+                    Background="{DynamicResource AppCardBrush}"
+                    BorderBrush="{DynamicResource AppBorderBrush}"
+                    BorderThickness="1"
+                    BoxShadow="0 24 70 #44000000">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="26">
+                    <Image Source="{Binding Brand.LogoUri}"
+                           Width="170"
+                           Height="170"
+                           Stretch="Uniform"
+                           VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1" Spacing="10" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Brand.AppName}" Foreground="{DynamicResource AppTextBrush}" FontSize="54" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding HealthSummary}" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="17" TextWrapping="Wrap" />
+                        <ProgressBar Minimum="0" Maximum="1" Value="{Binding MemoryStats.UsagePercent}" Width="360" HorizontalAlignment="Left" Margin="0,8,0,0" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <ItemsControl Grid.Row="1">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <Border Width="210" MinHeight="118" Margin="0,0,12,12" Padding="16" CornerRadius="18" Background="{DynamicResource AppPanelAltBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="RAM usage" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" />
+                        <TextBlock Text="{Binding MemoryStats.UsagePercentDisplay}" Foreground="{DynamicResource AppAccentBrush}" FontSize="28" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding MemoryStats.UsedDisplay, StringFormat='Used: {0}'}" Foreground="{DynamicResource AppTextBrush}" FontSize="12" />
+                    </StackPanel>
+                </Border>
+                <Border Width="210" MinHeight="118" Margin="0,0,12,12" Padding="16" CornerRadius="18" Background="{DynamicResource AppPanelAltBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="CPU usage" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" />
+                        <TextBlock Text="{Binding CpuUsageDisplay}" Foreground="{DynamicResource AppAccentAltBrush}" FontSize="28" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding HardwareSummary.Processes}" Foreground="{DynamicResource AppTextBrush}" FontSize="12" />
+                    </StackPanel>
+                </Border>
+                <Border Width="210" MinHeight="118" Margin="0,0,12,12" Padding="16" CornerRadius="18" Background="{DynamicResource AppPanelAltBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Optimizations" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" />
+                        <TextBlock Text="{Binding OptimizationCount}" Foreground="{DynamicResource AppTextBrush}" FontSize="28" FontWeight="SemiBold" />
+                        <TextBlock Text="Loaded definitions" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" />
+                    </StackPanel>
+                </Border>
+                <Border Width="210" MinHeight="118" Margin="0,0,12,12" Padding="16" CornerRadius="18" Background="{DynamicResource AppPanelAltBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Restart required" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" />
+                        <TextBlock Text="{Binding RestartRequiredCount}" Foreground="{DynamicResource AppWarningBrush}" FontSize="28" FontWeight="SemiBold" />
+                        <TextBlock Text="Review before applying" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" />
+                    </StackPanel>
+                </Border>
+            </ItemsControl>
+
+            <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="14">
+                <Border Padding="18" CornerRadius="18" Background="{DynamicResource AppPanelAltBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="CPU" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" />
+                        <TextBlock Text="{Binding HardwareSummary.Cpu}" Foreground="{DynamicResource AppTextBrush}" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+                <Border Grid.Column="1" Padding="18" CornerRadius="18" Background="{DynamicResource AppPanelAltBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="GPU" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" />
+                        <TextBlock Text="{Binding HardwareSummary.Gpu}" Foreground="{DynamicResource AppTextBrush}" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Grid>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,72 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="using:PCOptimizer.Models"
+             xmlns:vm="using:PCOptimizer.ViewModels"
+             x:Class="PCOptimizer.Views.PcSpecsPageView"
+             x:DataType="vm:PcSpecsPageViewModel">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <Grid RowDefinitions="Auto,Auto" RowSpacing="16">
+            <ItemsControl>
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <Border Width="300" MinHeight="134" Margin="0,0,12,12" Padding="18" CornerRadius="18" Background="{DynamicResource AppPanelAltBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="CPU" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" />
+                        <TextBlock Text="{Binding Specs.Cpu}" Foreground="{DynamicResource AppTextBrush}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+                <Border Width="300" MinHeight="134" Margin="0,0,12,12" Padding="18" CornerRadius="18" Background="{DynamicResource AppPanelAltBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="GPU" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" />
+                        <TextBlock Text="{Binding Specs.Gpu}" Foreground="{DynamicResource AppTextBrush}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+                <Border Width="300" MinHeight="134" Margin="0,0,12,12" Padding="18" CornerRadius="18" Background="{DynamicResource AppPanelAltBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="RAM" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" />
+                        <TextBlock Text="{Binding Specs.Ram}" Foreground="{DynamicResource AppTextBrush}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+                <Border Width="300" MinHeight="134" Margin="0,0,12,12" Padding="18" CornerRadius="18" Background="{DynamicResource AppPanelAltBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Motherboard" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" />
+                        <TextBlock Text="{Binding Specs.Motherboard}" Foreground="{DynamicResource AppTextBrush}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+                <Border Width="300" MinHeight="134" Margin="0,0,12,12" Padding="18" CornerRadius="18" Background="{DynamicResource AppPanelAltBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Windows" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" />
+                        <TextBlock Text="{Binding Specs.WindowsVersion}" Foreground="{DynamicResource AppTextBrush}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+            </ItemsControl>
+
+            <StackPanel Grid.Row="1" Spacing="10">
+                <TextBlock Text="Storage drives" Foreground="{DynamicResource AppTextBrush}" FontSize="20" FontWeight="SemiBold" />
+                <ItemsControl ItemsSource="{Binding Specs.Drives}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="models:StorageDriveInfo">
+                            <Border Margin="0,0,0,10" Padding="16" CornerRadius="18" Background="{DynamicResource AppPanelAltBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1">
+                                <Grid ColumnDefinitions="*,180" ColumnSpacing="18">
+                                    <StackPanel Spacing="6">
+                                        <TextBlock Text="{Binding Title}" Foreground="{DynamicResource AppTextBrush}" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                        <TextBlock Text="{Binding Format}" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" />
+                                        <ProgressBar Minimum="0" Maximum="1" Value="{Binding UsagePercent}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Spacing="4">
+                                        <TextBlock Text="{Binding UsagePercentDisplay}" Foreground="{DynamicResource AppAccentBrush}" FontSize="22" FontWeight="SemiBold" HorizontalAlignment="Right" />
+                                        <TextBlock Text="{Binding UsedDisplay, StringFormat='Used: {0}'}" Foreground="{DynamicResource AppTextBrush}" FontSize="12" HorizontalAlignment="Right" />
+                                        <TextBlock Text="{Binding TotalDisplay, StringFormat='Total: {0}'}" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" HorizontalAlignment="Right" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</UserControl>

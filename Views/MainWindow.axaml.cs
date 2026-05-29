@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Input;
 using PCOptimizer.ViewModels;
 using System;
 
@@ -26,6 +27,7 @@ public partial class MainWindow : Window
                 disposable.Dispose();
             }
         };
+        KeyDown += OnKeyDown;
     }
 
     private void UpdateAnimationState(bool? paused = null)
@@ -36,5 +38,24 @@ public partial class MainWindow : Window
         }
 
         viewModel.AreAnimationsPaused = paused ?? WindowState == WindowState.Minimized || !IsVisible;
+    }
+
+    private void OnKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel viewModel)
+        {
+            return;
+        }
+
+        if (e.Key == Key.Right)
+        {
+            viewModel.Navigate(1);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Left)
+        {
+            viewModel.Navigate(-1);
+            e.Handled = true;
+        }
     }
 }

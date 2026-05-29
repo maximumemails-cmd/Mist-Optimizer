@@ -17,9 +17,11 @@ public sealed class OptimizationPanelViewModel : ViewModelBase
     private readonly AppLogger _logger;
     private readonly bool _restartPanel;
     private string _selectedFilter = "All";
+    private string _searchText = string.Empty;
     private double _progress;
     private string _statusText = "Waiting";
     private string _emptyStateText = string.Empty;
+    private bool _bulkUpdating;
 
     public OptimizationPanelViewModel(
         string title,
@@ -35,24 +37,9 @@ public sealed class OptimizationPanelViewModel : ViewModelBase
         _engine = engine;
         _logger = logger;
 
-        CategoryFilters = new ObservableCollection<string>
-        {
-            "All",
-            "Network",
-            "Hardware",
-            "Gaming",
-            "Startup",
-            "Services",
-            "Privacy",
-            "Storage",
-            "Power",
-            "Visual Effects",
-            "Drivers / Updates",
-            "Restore / Backups",
-            "Advanced"
-        };
-
         AllCategories = BuildCategories(actions);
+        CategoryFilters = new ObservableCollection<string>(
+            new[] { "All" }.Concat(AllCategories.Select(category => category.Name)).Distinct(StringComparer.OrdinalIgnoreCase));
         FilteredCategories = new ObservableCollection<OptimizationCategory>();
         RefreshFilteredCategories();
 
@@ -89,6 +76,18 @@ public sealed class OptimizationPanelViewModel : ViewModelBase
         }
     }
 
+    public string SearchText
+    {
+        get => _searchText;
+        set
+        {
+            if (SetProperty(ref _searchText, value))
+            {
+                RefreshFilteredCategories();
+            }
+        }
+    }
+
     public double Progress
     {
         get => _progress;
@@ -108,6 +107,13 @@ public sealed class OptimizationPanelViewModel : ViewModelBase
     }
 
     public IReadOnlyList<OptimizationAction> Actions => AllCategories.SelectMany(category => category.Actions).ToList();
+    public int TotalCount => Actions.Count;
+    public int VisibleCount => FilteredCategories.Sum(category => category.Actions.Count);
+    public int SelectedCount => Actions.Count(action => action.IsSelected);
+    public int VisibleSelectedCount => FilteredCategories.SelectMany(category => category.Actions).Count(action => action.IsSelected);
+    public int VisibleApplicableCount => FilteredCategories.SelectMany(category => category.Actions).Count(action => action.IsEnabled);
+    public string CountDisplay => $"{SelectedCount} selected / {VisibleCount} visible / {TotalCount} total";
+    public string SelectedCountDisplay => $"{SelectedCount} selected";
 
     public string EmptyStateText
     {
@@ -117,7 +123,8 @@ public sealed class OptimizationPanelViewModel : ViewModelBase
 
     private async Task ApplySelectedAsync()
     {
-        StatusText = "Applying selected actions";
+        var selected = Actions.Where(action => action.IsSelected && action.IsEnabled).ToList();
+        StatusText = $"Applying {selected.Count} selected action(s)";
         Progress = 0;
 
         var restartNeeded = await _engine.ApplySelectedAsync(
@@ -125,7 +132,8 @@ public sealed class OptimizationPanelViewModel : ViewModelBase
             new Progress<double>(value => Progress = value),
             previewOnly: false);
 
-        StatusText = restartNeeded ? "Completed. Restart required." : "Completed safely.";
+        StatusText = BuildRunStatus("Apply", selected, restartNeeded);
+        RefreshCounts();
 
         if (_restartPanel && restartNeeded)
         {
@@ -135,7 +143,8 @@ public sealed class OptimizationPanelViewModel : ViewModelBase
 
     private async Task PreviewSelectedAsync()
     {
-        StatusText = "Previewing selected changes";
+        var selected = Actions.Where(action => action.IsSelected && action.IsEnabled).ToList();
+        StatusText = $"Previewing {selected.Count} selected action(s)";
         Progress = 0;
 
         await _engine.ApplySelectedAsync(
@@ -143,29 +152,55 @@ public sealed class OptimizationPanelViewModel : ViewModelBase
             new Progress<double>(value => Progress = value),
             previewOnly: true);
 
-        StatusText = "Preview complete. No changes were made.";
+        StatusText = BuildRunStatus("Preview", selected, restartNeeded: false);
+        RefreshCounts();
     }
 
     private async Task RevertSelectedAsync()
     {
-        StatusText = "Reverting selected actions";
+        var selected = Actions.Where(action => action.IsSelected && action.IsEnabled).ToList();
+        StatusText = $"Reverting {selected.Count} selected action(s)";
         Progress = 0;
 
         await _engine.RevertSelectedAsync(
             Actions,
             new Progress<double>(value => Progress = value));
 
-        StatusText = "Revert complete.";
+        StatusText = BuildRunStatus("Revert", selected, restartNeeded: false);
+        RefreshCounts();
+    }
+
+    public void ToggleActionSelection(OptimizationAction action)
+    {
+        if (!action.IsEnabled)
+        {
+            StatusText = $"{action.Name} is unavailable and cannot be selected.";
+            _logger.Warning($"{action.Name}: selection ignored because the optimisation is disabled or unavailable.");
+            return;
+        }
+
+        action.ToggleSelection();
+        StatusText = action.IsSelected
+            ? $"{action.Name} selected"
+            : $"{action.Name} deselected";
     }
 
     private void SetAllVisible(bool selected)
     {
+        _bulkUpdating = true;
+
         foreach (var category in FilteredCategories)
         {
             category.SetAllActions(selected);
         }
 
-        StatusText = selected ? "Visible actions selected" : "Visible actions deselected";
+        _bulkUpdating = false;
+        RefreshFilteredCategories();
+        var visibleApplicable = FilteredCategories.SelectMany(category => category.Actions).Count(action => action.IsEnabled);
+        StatusText = selected
+            ? $"{visibleApplicable} visible applicable action(s) selected"
+            : $"{visibleApplicable} visible applicable action(s) deselected";
+        RefreshCounts();
     }
 
     private void RefreshFilteredCategories()
@@ -174,22 +209,41 @@ public sealed class OptimizationPanelViewModel : ViewModelBase
 
         foreach (var category in AllCategories)
         {
-            if (SelectedFilter == "All" || category.Name == SelectedFilter)
+            if (SelectedFilter != "All" && category.Name != SelectedFilter)
             {
-                FilteredCategories.Add(category);
+                continue;
             }
+
+            var matchingActions = category.Actions.Where(MatchesSearch).ToList();
+
+            if (matchingActions.Count == 0)
+            {
+                continue;
+            }
+
+            var filteredCategory = new OptimizationCategory { Name = category.Name };
+
+            foreach (var action in matchingActions)
+            {
+                filteredCategory.Actions.Add(action);
+            }
+
+            filteredCategory.RefreshSelectionState();
+
+            FilteredCategories.Add(filteredCategory);
         }
 
         EmptyStateText = FilteredCategories.Count == 0
             ? $"No {Title.ToLowerInvariant()} rows match this filter. Disabled or unsafe candidates remain visible in their matching categories."
             : string.Empty;
+        RefreshCounts();
     }
 
     private ObservableCollection<OptimizationCategory> BuildCategories(IEnumerable<OptimizationAction> actions)
     {
         var categories = new ObservableCollection<OptimizationCategory>();
 
-        foreach (var group in actions.GroupBy(action => action.Category).OrderBy(group => group.Key))
+        foreach (var group in actions.GroupBy(action => string.IsNullOrWhiteSpace(action.Category) ? "Uncategorized" : action.Category).OrderBy(group => group.Key))
         {
             var category = new OptimizationCategory { Name = group.Key };
 
@@ -210,6 +264,52 @@ public sealed class OptimizationPanelViewModel : ViewModelBase
         if (sender is OptimizationAction action && e.PropertyName == nameof(OptimizationAction.IsSelected))
         {
             _logger.Info($"{action.Name}: {(action.IsSelected ? "selected" : "deselected")}.");
+            if (!_bulkUpdating)
+            {
+                RefreshFilteredCategories();
+            }
+
+            RefreshCounts();
         }
+    }
+
+    private bool MatchesSearch(OptimizationAction action)
+    {
+        if (string.IsNullOrWhiteSpace(SearchText))
+        {
+            return true;
+        }
+
+        var query = SearchText.Trim();
+        return action.Name.Contains(query, StringComparison.OrdinalIgnoreCase)
+            || action.Description.Contains(query, StringComparison.OrdinalIgnoreCase)
+            || action.Category.Contains(query, StringComparison.OrdinalIgnoreCase)
+            || action.Source.Contains(query, StringComparison.OrdinalIgnoreCase)
+            || action.ImplementationStatus.Contains(query, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void RefreshCounts()
+    {
+        OnPropertyChanged(nameof(TotalCount));
+        OnPropertyChanged(nameof(VisibleCount));
+        OnPropertyChanged(nameof(SelectedCount));
+        OnPropertyChanged(nameof(VisibleSelectedCount));
+        OnPropertyChanged(nameof(VisibleApplicableCount));
+        OnPropertyChanged(nameof(CountDisplay));
+        OnPropertyChanged(nameof(SelectedCountDisplay));
+    }
+
+    private static string BuildRunStatus(string verb, IReadOnlyCollection<OptimizationAction> selected, bool restartNeeded)
+    {
+        if (selected.Count == 0)
+        {
+            return $"{verb} skipped: 0 selected.";
+        }
+
+        var completed = selected.Count(action => action.Status == OptimizationStatus.Completed);
+        var skipped = selected.Count(action => action.Status is OptimizationStatus.Skipped or OptimizationStatus.NotImplemented);
+        var failed = selected.Count(action => action.Status == OptimizationStatus.Failed);
+        var suffix = restartNeeded ? " Restart required." : string.Empty;
+        return $"{verb} complete: {completed} succeeded, {skipped} skipped, {failed} failed.{suffix}";
     }
 }

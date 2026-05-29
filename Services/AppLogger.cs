@@ -27,12 +27,12 @@ public sealed class AppLogger
     {
         var directory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "PCOptimizer",
+            "Mist",
             "Logs");
 
         Directory.CreateDirectory(directory);
 
-        var path = Path.Combine(directory, $"pcoptimizer-log-{DateTime.Now:yyyyMMdd-HHmmss}.txt");
+        var path = Path.Combine(directory, $"mist-log-{DateTime.Now:yyyyMMdd-HHmmss}.txt");
         File.WriteAllText(path, Copy());
         Info($"Log saved to {path}");
 

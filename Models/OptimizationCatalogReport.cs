@@ -5,6 +5,7 @@ public sealed class OptimizationCatalogReport
     public string OptimizerstuffPath { get; set; } = "Not found";
     public int BatchFileCount { get; set; }
     public int ParsedCommandCount { get; set; }
+    public int LoadingFailureCount { get; set; }
     public int SafeCount { get; set; }
     public int CautionCount { get; set; }
     public int DangerousCount { get; set; }

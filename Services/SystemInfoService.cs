@@ -52,6 +52,19 @@ public sealed class SystemInfoService
         };
     }
 
+    public SystemSpecs GetSystemSpecs()
+    {
+        return new SystemSpecs
+        {
+            Cpu = GetCpuName(),
+            Gpu = GetGpuName(),
+            Ram = GetRamDescription(),
+            Motherboard = GetMotherboardName(),
+            WindowsVersion = RuntimeInformation.OSDescription,
+            Drives = GetStorageDrives()
+        };
+    }
+
     public MemoryStats GetMemoryStats()
     {
         if (OperatingSystem.IsWindows())
@@ -361,6 +374,56 @@ public sealed class SystemInfoService
         }
     }
 
+    private static IReadOnlyList<StorageDriveInfo> GetStorageDrives()
+    {
+        try
+        {
+            return DriveInfo.GetDrives()
+                .Where(drive => drive.IsReady && drive.DriveType != DriveType.CDRom)
+                .Select(drive => new StorageDriveInfo
+                {
+                    Name = drive.Name,
+                    Label = drive.VolumeLabel,
+                    Format = drive.DriveFormat,
+                    TotalBytes = drive.TotalSize,
+                    FreeBytes = drive.AvailableFreeSpace
+                })
+                .ToList();
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private static string GetMotherboardName()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return "Unknown";
+        }
+
+        try
+        {
+            using var searcher = new ManagementObjectSearcher("SELECT Manufacturer, Product FROM Win32_BaseBoard");
+            var board = searcher.Get().Cast<ManagementObject>().FirstOrDefault();
+
+            if (board is null)
+            {
+                return "Unknown";
+            }
+
+            var manufacturer = board["Manufacturer"]?.ToString()?.Trim();
+            var product = board["Product"]?.ToString()?.Trim();
+            var name = string.Join(" ", new[] { manufacturer, product }.Where(value => !string.IsNullOrWhiteSpace(value)));
+            return string.IsNullOrWhiteSpace(name) ? "Unknown" : name;
+        }
+        catch
+        {
+            return "Unknown";
+        }
+    }
+
     private static MemoryStats GetWindowsMemoryStats()
     {
         var status = new MemoryStatusEx();
@@ -372,13 +435,38 @@ public sealed class SystemInfoService
 
         var total = (long)status.TotalPhys;
         var available = (long)status.AvailPhys;
+        var cached = GetWindowsCachedMemoryBytes();
 
         return new MemoryStats
         {
             TotalBytes = total,
             AvailableBytes = available,
-            UsedBytes = Math.Max(0, total - available)
+            UsedBytes = Math.Max(0, total - available),
+            CachedBytes = cached,
+            Timestamp = DateTime.Now
         };
+    }
+
+    private static long GetWindowsCachedMemoryBytes()
+    {
+        try
+        {
+            var info = new PerformanceInformation
+            {
+                Size = Marshal.SizeOf<PerformanceInformation>()
+            };
+
+            if (!GetPerformanceInfo(ref info, info.Size))
+            {
+                return 0;
+            }
+
+            return checked(info.SystemCache.ToInt64() * info.PageSize.ToInt64());
+        }
+        catch
+        {
+            return 0;
+        }
     }
 
     private static MemoryStats GetLinuxMemoryStats()
@@ -410,7 +498,9 @@ public sealed class SystemInfoService
             {
                 TotalBytes = total,
                 AvailableBytes = available,
-                UsedBytes = Math.Max(0, total - available)
+                UsedBytes = Math.Max(0, total - available),
+                CachedBytes = values.GetValueOrDefault("Cached") + values.GetValueOrDefault("SReclaimable"),
+                Timestamp = DateTime.Now
             };
         }
         catch
@@ -446,7 +536,9 @@ public sealed class SystemInfoService
             {
                 TotalBytes = (long)total,
                 AvailableBytes = available,
-                UsedBytes = Math.Max(0, (long)total - available)
+                UsedBytes = Math.Max(0, (long)total - available),
+                CachedBytes = (long)((info.inactive_count + info.purgeable_count + info.speculative_count) * pageSize),
+                Timestamp = DateTime.Now
             };
         }
         catch
@@ -487,6 +579,9 @@ public sealed class SystemInfoService
 
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern bool GlobalMemoryStatusEx([In, Out] MemoryStatusEx lpBuffer);
+
+    [DllImport("psapi.dll", SetLastError = true)]
+    private static extern bool GetPerformanceInfo(ref PerformanceInformation performanceInformation, int size);
 
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern bool GetSystemTimes(out FileTime idleTime, out FileTime kernelTime, out FileTime userTime);
@@ -529,6 +624,25 @@ public sealed class SystemInfoService
         public ulong TotalVirtual;
         public ulong AvailVirtual;
         public ulong AvailExtendedVirtual;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct PerformanceInformation
+    {
+        public int Size;
+        public IntPtr CommitTotal;
+        public IntPtr CommitLimit;
+        public IntPtr CommitPeak;
+        public IntPtr PhysicalTotal;
+        public IntPtr PhysicalAvailable;
+        public IntPtr SystemCache;
+        public IntPtr KernelTotal;
+        public IntPtr KernelPaged;
+        public IntPtr KernelNonpaged;
+        public IntPtr PageSize;
+        public int HandleCount;
+        public int ProcessCount;
+        public int ThreadCount;
     }
 
     [StructLayout(LayoutKind.Sequential)]

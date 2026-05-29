@@ -29,7 +29,19 @@ public sealed class OptimizationAction : ViewModelBase
     public bool IsSelected
     {
         get => _isSelected;
-        set => SetProperty(ref _isSelected, value);
+        set
+        {
+            if (!IsEnabled)
+            {
+                value = false;
+            }
+
+            if (SetProperty(ref _isSelected, value))
+            {
+                OnPropertyChanged(nameof(SelectionMark));
+                OnPropertyChanged(nameof(SelectionStateText));
+            }
+        }
     }
 
     public OptimizationStatus Status
@@ -44,4 +56,15 @@ public sealed class OptimizationAction : ViewModelBase
     public string ImplementationBadge => ImplementationStatus;
     public string RevertBadge => Reversible ? "Revert available" : $"Revert: {Reversibility}";
     public string WarningBadge => RequiresSystemWarning ? "Warn before apply" : "No write warning";
+    public string SelectionMark => IsSelected ? "✓" : string.Empty;
+    public string SelectionStateText => IsSelected ? "Selected" : IsEnabled ? "Not selected" : "Unavailable";
+    public double RowOpacity => IsEnabled ? 1 : 0.48;
+
+    public void ToggleSelection()
+    {
+        if (IsEnabled)
+        {
+            IsSelected = !IsSelected;
+        }
+    }
 }

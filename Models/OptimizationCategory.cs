@@ -14,6 +14,7 @@ public sealed class OptimizationCategory : ViewModelBase
 
     public string Name { get; init; } = string.Empty;
     public ObservableCollection<OptimizationAction> Actions { get; } = new();
+    public string CountDisplay => $"{Actions.Count} rows";
 
     public bool IsSelected
     {
@@ -51,6 +52,7 @@ public sealed class OptimizationCategory : ViewModelBase
     {
         action.PropertyChanged += OnActionPropertyChanged;
         Actions.Add(action);
+        OnPropertyChanged(nameof(CountDisplay));
         RefreshSelectionState();
     }
 
