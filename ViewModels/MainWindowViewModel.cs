@@ -19,12 +19,16 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     private readonly OptimizationEngine _optimizationEngine;
     private readonly RamCleanerService _ramCleanerService;
     private readonly SystemInfoService _systemInfoService;
+    private readonly SwuabNetworkService _swuabNetworkService;
     private readonly AppSettings _settings;
     private readonly DispatcherTimer _liveStatsTimer;
     private bool _isRestartPromptOpen;
     private bool _areAnimationsPaused;
     private double _globalProgress;
     private HardwareSummary _hardwareSummary;
+    private StorageDriveInfo? _primaryStorageDrive;
+    private double? _gpuUsagePercent;
+    private int _dashboardRefreshTick;
     private AppPageViewModel _currentPage;
     private bool _isDisposed;
 
@@ -35,6 +39,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         OptimizationEngine optimizationEngine,
         RamCleanerService ramCleanerService,
         SystemInfoService systemInfoService,
+        SwuabNetworkService swuabNetworkService,
         AppSettings settings)
     {
         _logger = logger;
@@ -43,15 +48,19 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
         _optimizationEngine = optimizationEngine;
         _ramCleanerService = ramCleanerService;
         _systemInfoService = systemInfoService;
+        _swuabNetworkService = swuabNetworkService;
         _settings = settings;
 
         Brand = new BrandAssets();
         LogPanel = new LogPanelViewModel(logger);
         _hardwareSummary = _systemInfoService.GetHardwareSummary();
+        _primaryStorageDrive = _systemInfoService.GetPrimaryStorageDrive();
+        _gpuUsagePercent = _systemInfoService.GetGpuUsagePercent();
 
         Home = new HomePageViewModel();
         RamCleaner = new RamCleanerPanelViewModel(_ramCleanerService, _settings, _settingsService);
         PcSpecs = new PcSpecsPageViewModel(_systemInfoService);
+        Swuab = new SwuabPageViewModel(_swuabNetworkService, _logger, _settings, _settingsService);
 
         var actions = _catalogService.GetAll(_settings.SelectedOptimizationIds).ToList();
         LogCatalogReport(_catalogService.LastReport, actions);
@@ -70,7 +79,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
             _logger);
 
         LiveOptimizations = new OptimizationPanelViewModel(
-            "Live Optimizations",
+            "Non-Restart Optimizations",
             "Actions that can run or preview during the current session.",
             false,
             actions.Where(action => !action.RequiresRestart),
@@ -84,19 +93,18 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
 
         Pages =
         [
-            new AppPageViewModel("Home", "System health", Home),
-            new AppPageViewModel("RAM Cleaner", "Live memory", RamCleaner),
-            new AppPageViewModel("PC Specs", "Hardware profile", PcSpecs),
-            new AppPageViewModel("Restart Optimizations", "Restart-aware", RestartOptimizations),
-            new AppPageViewModel("Live Optimizations", "In-session", LiveOptimizations)
+            new AppPageViewModel("Home", "System health", Home, SelectPage),
+            new AppPageViewModel("RAM Cleaner", "Live memory", RamCleaner, SelectPage),
+            new AppPageViewModel("PC Specs", "Hardware profile", PcSpecs, SelectPage),
+            new AppPageViewModel("Restart Optimizations", "Restart-aware", RestartOptimizations, SelectPage),
+            new AppPageViewModel("Non-Restart Optimizations", "In-session", LiveOptimizations, SelectPage),
+            new AppPageViewModel("Swuab", "TCP/IP tuning", Swuab, SelectPage)
         ];
 
         _currentPage = Pages[0];
         _currentPage.IsCurrent = true;
         RefreshHome();
 
-        NextPageCommand = new RelayCommand(_ => Navigate(1));
-        PreviousPageCommand = new RelayCommand(_ => Navigate(-1));
         RestartNowCommand = new RelayCommand(_ => RestartNowPlaceholder());
         RestartLaterCommand = new RelayCommand(_ => IsRestartPromptOpen = false);
         RefreshHardwareCommand = new RelayCommand(_ => RefreshHardwareSummary());
@@ -117,11 +125,10 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     public HomePageViewModel Home { get; }
     public RamCleanerPanelViewModel RamCleaner { get; }
     public PcSpecsPageViewModel PcSpecs { get; }
+    public SwuabPageViewModel Swuab { get; }
     public OptimizationPanelViewModel RestartOptimizations { get; }
     public OptimizationPanelViewModel LiveOptimizations { get; }
     public ObservableCollection<AppPageViewModel> Pages { get; }
-    public ICommand NextPageCommand { get; }
-    public ICommand PreviousPageCommand { get; }
     public ICommand RestartNowCommand { get; }
     public ICommand RestartLaterCommand { get; }
     public ICommand RefreshHardwareCommand { get; }
@@ -192,6 +199,14 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
 
         var nextIndex = (Pages.IndexOf(CurrentPage) + direction + Pages.Count) % Pages.Count;
         CurrentPage = Pages[nextIndex];
+    }
+
+    private void SelectPage(AppPageViewModel page)
+    {
+        if (Pages.Contains(page))
+        {
+            CurrentPage = page;
+        }
     }
 
     private void OnActionPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -265,6 +280,8 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
     private void RefreshHardwareSummary()
     {
         HardwareSummary = _systemInfoService.GetHardwareSummary();
+        _primaryStorageDrive = _systemInfoService.GetPrimaryStorageDrive();
+        _gpuUsagePercent = _systemInfoService.GetGpuUsagePercent();
         RamCleaner.RefreshStatsCommand.Execute(null);
         PcSpecs.Refresh();
         RefreshHome();
@@ -288,6 +305,13 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
             Processes = _systemInfoService.GetProcessCountDisplay()
         };
 
+        _dashboardRefreshTick++;
+        _gpuUsagePercent = _systemInfoService.GetGpuUsagePercent();
+        if (_dashboardRefreshTick % 5 == 0)
+        {
+            _primaryStorageDrive = _systemInfoService.GetPrimaryStorageDrive();
+        }
+
         RamCleaner.RefreshLiveStats();
         RefreshHome();
     }
@@ -298,7 +322,10 @@ public sealed class MainWindowViewModel : ViewModelBase, IDisposable
             HardwareSummary,
             RamCleaner.MemoryStats,
             TotalOptimizationCount,
-            RestartRequiredCount);
+            RestartRequiredCount,
+            _systemInfoService.IsAdministrator(),
+            _gpuUsagePercent,
+            _primaryStorageDrive);
         OnPropertyChanged(nameof(TotalOptimizationCount));
         OnPropertyChanged(nameof(RestartRequiredCount));
     }

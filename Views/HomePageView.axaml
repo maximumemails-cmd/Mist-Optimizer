@@ -1,78 +1,108 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:PCOptimizer.Controls"
              xmlns:vm="using:PCOptimizer.ViewModels"
              x:Class="PCOptimizer.Views.HomePageView"
              x:DataType="vm:HomePageViewModel">
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <Grid RowDefinitions="Auto,Auto,*" RowSpacing="18">
+        <Grid RowDefinitions="Auto,Auto,*" RowSpacing="16" MinHeight="0">
             <Border CornerRadius="28"
                     Padding="28"
                     Background="{DynamicResource AppCardBrush}"
                     BorderBrush="{DynamicResource AppBorderBrush}"
                     BorderThickness="1"
                     BoxShadow="0 24 70 #44000000">
-                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="26">
+                <Grid ColumnDefinitions="156,*,156" ColumnSpacing="18" MinHeight="176">
                     <Image Source="{Binding Brand.LogoUri}"
-                           Width="170"
-                           Height="170"
+                           Width="132"
+                           Height="132"
                            Stretch="Uniform"
+                           HorizontalAlignment="Center"
                            VerticalAlignment="Center" />
-                    <StackPanel Grid.Column="1" Spacing="10" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding Brand.AppName}" Foreground="{DynamicResource AppTextBrush}" FontSize="54" FontWeight="SemiBold" />
-                        <TextBlock Text="{Binding HealthSummary}" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="17" TextWrapping="Wrap" />
-                        <ProgressBar Minimum="0" Maximum="1" Value="{Binding MemoryStats.UsagePercent}" Width="360" HorizontalAlignment="Left" Margin="0,8,0,0" />
+
+                    <StackPanel Grid.Column="1"
+                                Spacing="10"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Stretch">
+                        <TextBlock Text="{Binding Brand.AppName}"
+                                   Foreground="{DynamicResource AppTextBrush}"
+                                   FontSize="54"
+                                   FontWeight="SemiBold"
+                                   TextAlignment="Center"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Text="{Binding HealthSummary}"
+                                   Foreground="{DynamicResource AppMutedTextBrush}"
+                                   FontSize="17"
+                                   TextWrapping="Wrap"
+                                   TextAlignment="Center"
+                                   HorizontalAlignment="Center" />
+                        <ProgressBar Minimum="0"
+                                     Maximum="1"
+                                     Value="{Binding MemoryStats.UsagePercent}"
+                                     MaxWidth="360"
+                                     HorizontalAlignment="Stretch"
+                                     Margin="0,8,0,0" />
                     </StackPanel>
+
+                    <Border Grid.Column="2"
+                            Padding="12,8"
+                            CornerRadius="12"
+                            Background="{DynamicResource AppPanelBrush}"
+                            BorderBrush="{DynamicResource AppBorderBrush}"
+                            BorderThickness="1"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center">
+                        <TextBlock Text="{Binding AdminStatusText}" Foreground="{DynamicResource AppAccentBrush}" FontSize="12" FontWeight="SemiBold" />
+                    </Border>
                 </Grid>
             </Border>
 
-            <ItemsControl Grid.Row="1">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <WrapPanel />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <Border Width="210" MinHeight="118" Margin="0,0,12,12" Padding="16" CornerRadius="18" Background="{DynamicResource AppPanelAltBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1">
-                    <StackPanel Spacing="6">
-                        <TextBlock Text="RAM usage" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" />
-                        <TextBlock Text="{Binding MemoryStats.UsagePercentDisplay}" Foreground="{DynamicResource AppAccentBrush}" FontSize="28" FontWeight="SemiBold" />
-                        <TextBlock Text="{Binding MemoryStats.UsedDisplay, StringFormat='Used: {0}'}" Foreground="{DynamicResource AppTextBrush}" FontSize="12" />
-                    </StackPanel>
-                </Border>
-                <Border Width="210" MinHeight="118" Margin="0,0,12,12" Padding="16" CornerRadius="18" Background="{DynamicResource AppPanelAltBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1">
-                    <StackPanel Spacing="6">
-                        <TextBlock Text="CPU usage" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" />
-                        <TextBlock Text="{Binding CpuUsageDisplay}" Foreground="{DynamicResource AppAccentAltBrush}" FontSize="28" FontWeight="SemiBold" />
-                        <TextBlock Text="{Binding HardwareSummary.Processes}" Foreground="{DynamicResource AppTextBrush}" FontSize="12" />
-                    </StackPanel>
-                </Border>
-                <Border Width="210" MinHeight="118" Margin="0,0,12,12" Padding="16" CornerRadius="18" Background="{DynamicResource AppPanelAltBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1">
-                    <StackPanel Spacing="6">
-                        <TextBlock Text="Optimizations" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" />
-                        <TextBlock Text="{Binding OptimizationCount}" Foreground="{DynamicResource AppTextBrush}" FontSize="28" FontWeight="SemiBold" />
-                        <TextBlock Text="Loaded definitions" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" />
-                    </StackPanel>
-                </Border>
-                <Border Width="210" MinHeight="118" Margin="0,0,12,12" Padding="16" CornerRadius="18" Background="{DynamicResource AppPanelAltBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1">
-                    <StackPanel Spacing="6">
-                        <TextBlock Text="Restart required" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" />
-                        <TextBlock Text="{Binding RestartRequiredCount}" Foreground="{DynamicResource AppWarningBrush}" FontSize="28" FontWeight="SemiBold" />
-                        <TextBlock Text="Review before applying" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" />
-                    </StackPanel>
-                </Border>
-            </ItemsControl>
+            <Border Grid.Row="1"
+                    IsVisible="{Binding IsAdminWarningVisible}"
+                    Padding="14"
+                    CornerRadius="16"
+                    Background="{DynamicResource AppPanelAltBrush}"
+                    BorderBrush="{DynamicResource AppWarningBrush}"
+                    BorderThickness="1">
+                <TextBlock Text="Mist is not running as administrator. Some optimizations may not work."
+                           Foreground="{DynamicResource AppWarningBrush}"
+                           FontSize="12"
+                           FontWeight="SemiBold"
+                           TextWrapping="Wrap" />
+            </Border>
 
-            <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="14">
-                <Border Padding="18" CornerRadius="18" Background="{DynamicResource AppPanelAltBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1">
-                    <StackPanel Spacing="8">
-                        <TextBlock Text="CPU" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" />
-                        <TextBlock Text="{Binding HardwareSummary.Cpu}" Foreground="{DynamicResource AppTextBrush}" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" />
-                    </StackPanel>
+            <Grid Grid.Row="2" RowDefinitions="*,*" ColumnDefinitions="*,*" RowSpacing="14" ColumnSpacing="14" MinHeight="500">
+                <Border Padding="16" CornerRadius="20" Background="{DynamicResource AppPanelAltBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1">
+                    <controls:DonutMeterControl Title="{Binding RamMetric.Title}"
+                                                 Percentage="{Binding RamMetric.Percentage}"
+                                                 CenterText="{Binding RamMetric.CenterText}"
+                                                 Subtext="{Binding RamMetric.Subtext}"
+                                                 StatusText="{Binding RamMetric.StatusText}"
+                                                 AccentColor="#75C7FF" />
                 </Border>
-                <Border Grid.Column="1" Padding="18" CornerRadius="18" Background="{DynamicResource AppPanelAltBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1">
-                    <StackPanel Spacing="8">
-                        <TextBlock Text="GPU" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" />
-                        <TextBlock Text="{Binding HardwareSummary.Gpu}" Foreground="{DynamicResource AppTextBrush}" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" />
-                    </StackPanel>
+                <Border Grid.Column="1" Padding="16" CornerRadius="20" Background="{DynamicResource AppPanelAltBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1">
+                    <controls:DonutMeterControl Title="{Binding CpuMetric.Title}"
+                                                 Percentage="{Binding CpuMetric.Percentage}"
+                                                 CenterText="{Binding CpuMetric.CenterText}"
+                                                 Subtext="{Binding CpuMetric.Subtext}"
+                                                 StatusText="{Binding CpuMetric.StatusText}"
+                                                 AccentColor="#B77DFF" />
+                </Border>
+                <Border Grid.Row="1" Padding="16" CornerRadius="20" Background="{DynamicResource AppPanelAltBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1">
+                    <controls:DonutMeterControl Title="{Binding GpuMetric.Title}"
+                                                 Percentage="{Binding GpuMetric.Percentage}"
+                                                 CenterText="{Binding GpuMetric.CenterText}"
+                                                 Subtext="{Binding GpuMetric.Subtext}"
+                                                 StatusText="{Binding GpuMetric.StatusText}"
+                                                 AccentColor="#79E8FF" />
+                </Border>
+                <Border Grid.Row="1" Grid.Column="1" Padding="16" CornerRadius="20" Background="{DynamicResource AppPanelAltBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1">
+                    <controls:DonutMeterControl Title="{Binding StorageMetric.Title}"
+                                                 Percentage="{Binding StorageMetric.Percentage}"
+                                                 CenterText="{Binding StorageMetric.CenterText}"
+                                                 Subtext="{Binding StorageMetric.Subtext}"
+                                                 StatusText="{Binding StorageMetric.StatusText}"
+                                                 AccentColor="#667DFF" />
                 </Border>
             </Grid>
         </Grid>

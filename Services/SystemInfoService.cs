@@ -65,6 +65,46 @@ public sealed class SystemInfoService
         };
     }
 
+    public StorageDriveInfo? GetPrimaryStorageDrive()
+    {
+        try
+        {
+            var systemRoot = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System));
+            var drives = DriveInfo.GetDrives()
+                .Where(drive => drive.IsReady && drive.DriveType != DriveType.CDRom)
+                .ToList();
+
+            var drive = drives.FirstOrDefault(item => string.Equals(item.Name, systemRoot, StringComparison.OrdinalIgnoreCase))
+                ?? drives.FirstOrDefault(item => item.DriveType == DriveType.Fixed)
+                ?? drives.FirstOrDefault();
+
+            return drive is null
+                ? null
+                : new StorageDriveInfo
+                {
+                    Name = drive.Name,
+                    Label = drive.VolumeLabel,
+                    Format = drive.DriveFormat,
+                    TotalBytes = drive.TotalSize,
+                    FreeBytes = drive.AvailableFreeSpace
+                };
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public double? GetGpuUsagePercent()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return null;
+        }
+
+        return GetWindowsGpuUsagePercent();
+    }
+
     public MemoryStats GetMemoryStats()
     {
         if (OperatingSystem.IsWindows())
@@ -304,6 +344,46 @@ public sealed class SystemInfoService
         }
 
         return "Unknown";
+    }
+
+    [SupportedOSPlatform("windows")]
+    private static double? GetWindowsGpuUsagePercent()
+    {
+        try
+        {
+            using var searcher = new ManagementObjectSearcher(
+                "SELECT Name, UtilizationPercentage FROM Win32_PerfFormattedData_GPUPerformanceCounters_GPUEngine");
+
+            var values = searcher.Get()
+                .Cast<ManagementObject>()
+                .Select(item => new
+                {
+                    Name = item["Name"]?.ToString() ?? string.Empty,
+                    Value = Convert.ToDouble(item["UtilizationPercentage"] ?? 0)
+                })
+                .Where(item => item.Value >= 0)
+                .ToList();
+
+            if (values.Count == 0)
+            {
+                return null;
+            }
+
+            var graphicsValues = values
+                .Where(item => item.Name.Contains("engtype_3D", StringComparison.OrdinalIgnoreCase))
+                .Select(item => item.Value)
+                .ToList();
+
+            var usage = graphicsValues.Count > 0
+                ? graphicsValues.Sum()
+                : values.Max(item => item.Value);
+
+            return Math.Clamp(usage / 100d, 0, 1);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static string GetRamDescription()

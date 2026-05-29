@@ -62,5 +62,6 @@ public sealed class AppSettings
     public bool RamCleanerCloseSelectedApps { get; set; }
     public bool RamCleanerStandbyCleanupEnabled { get; set; }
     public Dictionary<string, bool> RamCleanerProcessSelections { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public Dictionary<string, string> SwuabValues { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public DateTime LastOpenedUtc { get; set; } = DateTime.UtcNow;
 }

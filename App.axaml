@@ -30,6 +30,16 @@
             <Setter Property="Opacity" Value="0.94" />
             <Setter Property="Background" Value="{DynamicResource AppPanelHoverBrush}" />
         </Style>
+        <Style Selector="Button.navItem">
+            <Setter Property="CornerRadius" Value="14" />
+            <Setter Property="Background" Value="{DynamicResource AppPanelAltBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AppBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+        <Style Selector="Button.navItem.active">
+            <Setter Property="Background" Value="{DynamicResource AppPanelHoverBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AppAccentBrush}" />
+        </Style>
         <Style Selector="CheckBox">
             <Setter Property="Foreground" Value="{DynamicResource AppTextBrush}" />
         </Style>

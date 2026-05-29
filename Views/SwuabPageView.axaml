@@ -1,0 +1,188 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:PCOptimizer.ViewModels"
+             x:Class="PCOptimizer.Views.SwuabPageView"
+             x:DataType="vm:SwuabPageViewModel">
+    <Grid RowDefinitions="Auto,*,Auto" RowSpacing="14" MinHeight="0">
+        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
+            <StackPanel Spacing="5">
+                <TextBlock Text="Swuab" Foreground="{DynamicResource AppTextBrush}" FontSize="30" FontWeight="SemiBold" />
+                <TextBlock Text="TCP/IP tuning with real Windows apply, refresh, import, export, and per-setting status."
+                           Foreground="{DynamicResource AppMutedTextBrush}"
+                           FontSize="13"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Top">
+                <Border Padding="14,10" CornerRadius="14" Background="{DynamicResource AppPanelAltBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1">
+                    <TextBlock Text="{Binding AdminStateText}" Foreground="{DynamicResource AppWarningBrush}" FontSize="12" FontWeight="SemiBold" />
+                </Border>
+                <TextBlock Text="{Binding SelectedCountDisplay}" Foreground="{DynamicResource AppAccentBrush}" FontSize="12" HorizontalAlignment="Right" />
+            </StackPanel>
+        </Grid>
+
+        <ScrollViewer Grid.Row="1"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled"
+                      Padding="0,0,8,0"
+                      MinHeight="0">
+            <StackPanel Spacing="14">
+                <Border Padding="16"
+                        CornerRadius="18"
+                        Background="{DynamicResource AppPanelAltBrush}"
+                        BorderBrush="{DynamicResource AppBorderBrush}"
+                        BorderThickness="1">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                        <Border Width="34" Height="34" CornerRadius="17" Background="{DynamicResource MistGlowBrush}" VerticalAlignment="Top">
+                            <TextBlock Text="!" Foreground="#06111F" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <StackPanel Grid.Column="1" Spacing="4">
+                            <TextBlock Text="Network safety" Foreground="{DynamicResource AppTextBrush}" FontSize="16" FontWeight="SemiBold" />
+                            <TextBlock Text="Some TCP/IP changes can affect connectivity. Create a restore point or save your current Swuab config before applying broad changes. Nothing is applied automatically on page open."
+                                       Foreground="{DynamicResource AppMutedTextBrush}"
+                                       FontSize="12"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="10">
+                    <TextBlock Text="TCP Settings" Foreground="{DynamicResource AppTextBrush}" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    <Button Grid.Column="1" Content="Select All" Command="{Binding SelectAllCommand}" />
+                    <Button Grid.Column="2" Content="Deselect All" Command="{Binding DeselectAllCommand}" />
+                    <Button Grid.Column="3" Content="Refresh current values" Command="{Binding RefreshCurrentValuesCommand}" />
+                </Grid>
+
+                <ItemsControl ItemsSource="{Binding TcpSettings}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:SwuabSettingViewModel">
+                            <Border Background="{DynamicResource AppPanelAltBrush}"
+                                    BorderBrush="{DynamicResource AppBorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="18"
+                                    Padding="16"
+                                    Margin="0,0,0,12">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                    <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" VerticalAlignment="Top" Margin="0,4,0,0" />
+                                    <Grid Grid.Column="1" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="10">
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                            <StackPanel Spacing="4">
+                                                <TextBlock Text="{Binding Title}" Foreground="{DynamicResource AppTextBrush}" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                                <TextBlock Text="{Binding Description}" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" TextWrapping="Wrap" />
+                                            </StackPanel>
+                                            <Border Grid.Column="1" Padding="10,6" CornerRadius="10" Background="{DynamicResource AppPanelBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1" VerticalAlignment="Top">
+                                                <TextBlock Text="{Binding ValueDisplay}" Foreground="{DynamicResource AppAccentBrush}" FontSize="12" FontWeight="SemiBold" />
+                                            </Border>
+                                        </Grid>
+
+                                        <Grid Grid.Row="1" IsVisible="{Binding IsSlider}" RowDefinitions="Auto,Auto" RowSpacing="6">
+                                            <Slider Minimum="{Binding Minimum}"
+                                                    Maximum="{Binding Maximum}"
+                                                    Value="{Binding NumericValue, Mode=TwoWay}"
+                                                    TickFrequency="1"
+                                                    IsSnapToTickEnabled="True" />
+                                            <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                                                <TextBlock Text="{Binding Minimum}" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" />
+                                                <TextBlock Grid.Column="1" Text="{Binding ValueDisplay, StringFormat='Current: {0}'}" Foreground="{DynamicResource AppTextBrush}" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                                                <TextBlock Grid.Column="2" Text="{Binding Maximum}" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" />
+                                            </Grid>
+                                        </Grid>
+
+                                        <Grid Grid.Row="1" IsVisible="{Binding IsDropdown}" ColumnDefinitions="260,*" ColumnSpacing="12">
+                                            <ComboBox ItemsSource="{Binding Options}"
+                                                      SelectedItem="{Binding SelectedOption, Mode=TwoWay}"
+                                                      MinWidth="240"
+                                                      HorizontalAlignment="Left" />
+                                            <TextBlock Grid.Column="1" Text="Choose a supported Windows value, then apply selected." Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                        </Grid>
+
+                                        <Grid Grid.Row="1" IsVisible="{Binding IsToggle}" ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                            <ToggleSwitch IsChecked="{Binding BoolValue, Mode=TwoWay}"
+                                                          OnContent="On"
+                                                          OffContent="Off" />
+                                            <TextBlock Grid.Column="1" Text="Toggle state is queued until Apply selected is clicked." Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                        </Grid>
+
+                                        <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="10">
+                                            <Border Padding="10,7" CornerRadius="10" Background="{DynamicResource AppPanelBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1">
+                                                <TextBlock Text="{Binding CurrentWindowsValue, StringFormat='Windows: {0}'}" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" TextWrapping="Wrap" />
+                                            </Border>
+                                            <Border Grid.Column="1" Padding="10,7" CornerRadius="10" Background="{DynamicResource AppPanelBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1">
+                                                <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource AppWarningBrush}" FontSize="11" TextWrapping="Wrap" />
+                                            </Border>
+                                        </Grid>
+                                    </Grid>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock Text="IP Settings" Foreground="{DynamicResource AppTextBrush}" FontSize="20" FontWeight="SemiBold" />
+                <ItemsControl ItemsSource="{Binding IpSettings}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:SwuabSettingViewModel">
+                            <Border Background="{DynamicResource AppPanelAltBrush}"
+                                    BorderBrush="{DynamicResource AppBorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="18"
+                                    Padding="16"
+                                    Margin="0,0,0,12">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                    <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" VerticalAlignment="Top" Margin="0,4,0,0" />
+                                    <Grid Grid.Column="1" RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                            <StackPanel Spacing="4">
+                                                <TextBlock Text="{Binding Title}" Foreground="{DynamicResource AppTextBrush}" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                                <TextBlock Text="{Binding Description}" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" TextWrapping="Wrap" />
+                                            </StackPanel>
+                                            <Border Grid.Column="1" Padding="10,6" CornerRadius="10" Background="{DynamicResource AppPanelBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1" VerticalAlignment="Top">
+                                                <TextBlock Text="{Binding ValueDisplay}" Foreground="{DynamicResource AppAccentBrush}" FontSize="12" FontWeight="SemiBold" />
+                                            </Border>
+                                        </Grid>
+                                        <Grid Grid.Row="1" IsVisible="{Binding IsSlider}" RowDefinitions="Auto,Auto" RowSpacing="6">
+                                            <Slider Minimum="{Binding Minimum}"
+                                                    Maximum="{Binding Maximum}"
+                                                    Value="{Binding NumericValue, Mode=TwoWay}"
+                                                    TickFrequency="1"
+                                                    IsSnapToTickEnabled="True" />
+                                            <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                                                <TextBlock Text="{Binding Minimum}" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" />
+                                                <TextBlock Grid.Column="1" Text="{Binding ValueDisplay, StringFormat='Current: {0}'}" Foreground="{DynamicResource AppTextBrush}" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                                                <TextBlock Grid.Column="2" Text="{Binding Maximum}" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" />
+                                            </Grid>
+                                        </Grid>
+                                        <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="10">
+                                            <Border Padding="10,7" CornerRadius="10" Background="{DynamicResource AppPanelBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1">
+                                                <TextBlock Text="{Binding CurrentWindowsValue, StringFormat='Windows: {0}'}" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="11" TextWrapping="Wrap" />
+                                            </Border>
+                                            <Border Grid.Column="1" Padding="10,7" CornerRadius="10" Background="{DynamicResource AppPanelBrush}" BorderBrush="{DynamicResource AppBorderBrush}" BorderThickness="1">
+                                                <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource AppWarningBrush}" FontSize="11" TextWrapping="Wrap" />
+                                            </Border>
+                                        </Grid>
+                                    </Grid>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </ScrollViewer>
+
+        <Grid Grid.Row="2" RowDefinitions="Auto,Auto" RowSpacing="10">
+            <ProgressBar Minimum="0" Maximum="1" Value="{Binding Progress}" />
+            <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="10">
+                <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource AppMutedTextBrush}" FontSize="12" VerticalAlignment="Center" TextWrapping="Wrap" />
+                <Button Grid.Column="1" Content="Save Swuab Config" Command="{Binding SaveConfigCommand}" />
+                <Button Grid.Column="2" Content="Load Swuab Config" Click="OnLoadConfigClick" />
+                <Button Grid.Column="3" Content="Reset to Windows defaults" Command="{Binding ResetDefaultsCommand}" />
+                <Button Grid.Column="4" Content="Refresh current values" Command="{Binding RefreshCurrentValuesCommand}" />
+                <Button Grid.Column="5"
+                        Content="Apply selected"
+                        Command="{Binding ApplySelectedCommand}"
+                        Background="{DynamicResource MistGlowBrush}"
+                        Foreground="#06111F"
+                        FontWeight="SemiBold" />
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>

@@ -74,5 +74,9 @@ public sealed class SettingsService
         settings.RamCleanerProcessSelections = settings.RamCleanerProcessSelections is null
             ? new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase)
             : new Dictionary<string, bool>(settings.RamCleanerProcessSelections, StringComparer.OrdinalIgnoreCase);
+
+        settings.SwuabValues = settings.SwuabValues is null
+            ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            : new Dictionary<string, string>(settings.SwuabValues, StringComparer.OrdinalIgnoreCase);
     }
 }

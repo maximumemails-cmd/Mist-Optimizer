@@ -24,6 +24,7 @@ public partial class App : Application
             var systemInfoService = new SystemInfoService();
             var catalogService = new OptimizationCatalogService(logger);
             var windowsCommandService = new WindowsCommandService(logger);
+            var swuabNetworkService = new SwuabNetworkService(logger, windowsCommandService);
             var optimizerStateService = new OptimizerStateService();
             var optimizationEngine = new OptimizationEngine(logger, systemInfoService, windowsCommandService, optimizerStateService);
             var protectedProcessHelper = new ProtectedProcessHelper();
@@ -40,6 +41,7 @@ public partial class App : Application
                     optimizationEngine,
                     ramCleanerService,
                     systemInfoService,
+                    swuabNetworkService,
                     settings)
             };
         }
